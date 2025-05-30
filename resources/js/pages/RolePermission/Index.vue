@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { ref } from 'vue';
-import { Head, useForm, router } from '@inertiajs/vue3';
+import { ref, computed, watch } from 'vue';
+import { Head, useForm, router, Link } from '@inertiajs/vue3';
+import lodash from 'lodash';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
@@ -18,9 +19,34 @@ const props = defineProps({
         required: true
     },
     users: {
-        type: Array,
+        type: Object,
         required: true
+    },
+    filters: {
+        type: Object,
+        default: () => ({})
     }
+});
+
+const search = ref(props.filters?.search ?? '');
+
+// Debounced search function
+const performSearch = () => {
+    router.get(
+        route('roles.index'),
+        { search: search.value },
+        {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true
+        }
+    );
+};
+
+const debouncedSearch = lodash.debounce(performSearch, 300);
+
+watch(search, () => {
+    debouncedSearch();
 });
 
 const createRoleForm = useForm({
@@ -47,6 +73,21 @@ const showRoleModal = ref(false);
 const showPermissionModal = ref(false);
 const showAssignRoleModal = ref(false);
 const showEditRoleModal = ref(false);
+const showQuickAssignModal = ref(false);
+const selectedUser = ref(null);
+
+const quickAssignForm = useForm({
+    user_id: '',
+    role: ''
+});
+
+// Computed property for available roles (excluding already assigned roles)
+const availableRoles = computed(() => {
+    if (!selectedUser.value) return props.roles;
+    return props.roles.filter(role => 
+        !selectedUser.value.roles.some(userRole => userRole.name === role.name)
+    );
+});
 
 const submitRole = () => {
     createRoleForm.post(route('roles.create'), {
@@ -102,6 +143,32 @@ const updateRole = () => {
         }
     });
 };
+
+const unassignRole = (userId, roleName) => {
+    if (confirm(`Are you sure you want to remove the role "${roleName}" from this user?`)) {
+        router.post(route('roles.unassign'), {
+            user_id: userId,
+            role: roleName
+        });
+    }
+};
+
+const openQuickAssign = (user) => {
+    selectedUser.value = user;
+    quickAssignForm.user_id = user.id;
+    quickAssignForm.role = '';
+    showQuickAssignModal.value = true;
+};
+
+const quickAssignRole = () => {
+    quickAssignForm.post(route('roles.assign'), {
+        onSuccess: () => {
+            showQuickAssignModal.value = false;
+            quickAssignForm.reset();
+            selectedUser.value = null;
+        }
+    });
+};
 </script>
 
 <template>
@@ -117,28 +184,26 @@ const updateRole = () => {
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                    <div class="flex justify-between items-center mb-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
                         <h3 class="text-lg font-semibold">Roles and Permissions</h3>
-                        <div class="space-x-2">
+                        <div class="flex flex-col sm:flex-row gap-2">
                             <PrimaryButton @click="showRoleModal = true">Create Role</PrimaryButton>
                             <PrimaryButton @click="showPermissionModal = true">Create Permission</PrimaryButton>
                             <PrimaryButton @click="showAssignRoleModal = true">Assign Role</PrimaryButton>
                         </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    </div>                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Roles List -->
                         <div class="bg-gray-50 p-4 rounded-lg">
                             <h4 class="font-semibold mb-4">Roles</h4>
                             <div class="space-y-2">
-                                <div v-for="role in roles" :key="role.id" class="flex justify-between items-center bg-white p-3 rounded shadow-sm">
-                                    <div>
+                                <div v-for="role in roles" :key="role.id" class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-3 rounded shadow-sm">
+                                    <div class="mb-2 md:mb-0">
                                         <p class="font-medium">{{ role.name }}</p>
                                         <div class="text-sm text-gray-600">
                                             Permissions: {{ role.permissions.map(p => p.name).join(', ') }}
                                         </div>
                                     </div>
-                                    <div class="space-x-2">
+                                    <div class="flex flex-col sm:flex-row gap-2">
                                         <PrimaryButton @click="openEditRole(role)">Edit</PrimaryButton>
                                         <DangerButton @click="deleteRole(role.id)">Delete</DangerButton>
                                     </div>
@@ -156,7 +221,116 @@ const updateRole = () => {
                                 </div>
                             </div>
                         </div>
+                    </div>                    <!-- Users and Their Roles -->
+                    <div class="mt-8">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="font-semibold">Users and Their Roles</h4>                            <div class="w-64">
+                                <TextInput
+                                    type="text"
+                                    :modelValue="search"
+                                    @update:modelValue="(value) => search = value"
+                                    class="w-full"
+                                    placeholder="Search users..."
+                                />
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="space-y-4">
+                                <div v-for="user in users.data" :key="user.id" class="bg-white p-4 rounded shadow-sm">
+                                    <div class="flex justify-between items-start">
+                                        <div class="flex-grow">
+                                            <div class="flex justify-between items-center">
+                                                <p class="font-medium text-lg">{{ user.first_name }} {{ user.last_name }}</p>
+                                                <button 
+                                                    @click="openQuickAssign(user)"
+                                                    class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
+                                                >
+                                                    Assign Role
+                                                </button>
+                                            </div>
+                                            <div class="mt-3 flex flex-wrap gap-2">
+                                                <div v-for="role in user.roles" :key="role.id" 
+                                                    class="inline-flex items-center bg-blue-100 text-blue-800 px-3 py-1.5 rounded-full text-sm">
+                                                    {{ role.name }}
+                                                    <button @click="unassignRole(user.id, role.name)" 
+                                                        class="ml-2 text-blue-600 hover:text-blue-800 focus:outline-none"
+                                                        title="Remove role">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                                <div v-if="user.roles.length === 0" class="text-gray-500 text-sm italic">
+                                                    No roles assigned
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Pagination -->
+                            <div class="mt-6" v-if="users.data.length > 0">
+                                <div class="flex items-center justify-between">
+                                    <div class="text-sm text-gray-600">
+                                        Showing {{ users.from }} - {{ users.to }} of {{ users.total }} users
+                                    </div>
+                                    <div class="flex gap-1">
+                                        <Link
+                                            v-for="(link, i) in users.links"
+                                            :key="i"
+                                            :href="link.url"
+                                            v-html="link.label"
+                                            class="px-3 py-1 rounded text-sm"
+                                            :class="{ 
+                                                'bg-blue-500 text-white': link.active,
+                                                'text-gray-600 hover:bg-gray-100': !link.active && link.url,
+                                                'text-gray-400': !link.url 
+                                            }"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-else-if="search" class="text-center py-4 text-gray-500">
+                                No users found matching your search
+                            </div>
+                            <div v-else class="text-center py-4 text-gray-500">
+                                No users available
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Quick Assign Role Modal -->
+                    <Modal :show="showQuickAssignModal" @close="showQuickAssignModal = false">
+                        <div class="p-6">
+                            <h2 class="text-lg font-medium mb-4">Assign Role to {{ selectedUser ? selectedUser.first_name + ' ' + selectedUser.last_name : '' }}</h2>
+                            <form @submit.prevent="quickAssignRole" class="space-y-4">
+                                <div>
+                                    <InputLabel for="quickAssignRole" value="Select Role" />
+                                    <select
+                                        id="quickAssignRole"
+                                        v-model="quickAssignForm.role"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                        required
+                                    >
+                                        <option value="">Select a role</option>
+                                        <option 
+                                            v-for="role in availableRoles" 
+                                            :key="role.id" 
+                                            :value="role.name"
+                                        >
+                                            {{ role.name }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="flex justify-end">
+                                    <PrimaryButton type="submit" :disabled="quickAssignForm.processing">
+                                        Assign Role
+                                    </PrimaryButton>
+                                </div>
+                            </form>
+                        </div>
+                    </Modal>
                 </div>
             </div>
         </div>
@@ -232,8 +406,7 @@ const updateRole = () => {
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                             required
                         >
-                            <option value="">Select a user</option>
-                            <option v-for="user in users" :key="user.id" :value="user.id">
+                            <option value="">Select a user</option>                            <option v-for="user in users.data" :key="user.id" :value="user.id">
                                 {{ user.first_name }} {{ user.last_name }}
                             </option>
                         </select>

@@ -31,6 +31,7 @@ use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
 use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
+use App\Http\Middleware\AdminMiddleware;
 
 
 class Kernel extends HttpKernel
@@ -98,6 +99,6 @@ class Kernel extends HttpKernel
         'role' => RoleMiddleware::class,
         'permission' => PermissionMiddleware::class,
         'role_or_permission' => RoleOrPermissionMiddleware::class,
-        'admin' => \App\Http\Middleware\AdminMiddleware::class,
+        'admin' => AdminMiddleware::class,
     ];
 }
