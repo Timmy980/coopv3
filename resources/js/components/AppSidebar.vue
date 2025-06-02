@@ -22,6 +22,12 @@ const mainNavItems: NavItem[] = [
         href: route('roles.index'),
         icon: Shield,
     }] : []),
+
+    ...(user?.roles.includes('admin') ? [{
+        title: 'Members Management',
+        href: route('user-approvals.index'),
+        icon: Folder,
+    }] : []),
 ];
 
 const footerNavItems: NavItem[] = [

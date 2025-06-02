@@ -3,11 +3,11 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { ref, computed, watch } from 'vue';
 import { Head, useForm, router, Link } from '@inertiajs/vue3';
 import lodash from 'lodash';
-import InputLabel from '@/Components/InputLabel.vue';
-import TextInput from '@/Components/TextInput.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import DangerButton from '@/Components/DangerButton.vue';
-import Modal from '@/Components/Modal.vue';
+import InputLabel from '@/components/InputLabel.vue';
+import TextInput from '@/components/TextInput.vue';
+import PrimaryButton from '@/components/PrimaryButton.vue';
+import DangerButton from '@/components/DangerButton.vue';
+import Modal from '@/components/Modal.vue';
 
 const props = defineProps({
     roles: {

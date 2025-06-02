@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\UserApprovalController;
 use App\Http\Middleware\AdminMiddleware;
 
 Route::get('/', function () {
@@ -15,6 +16,12 @@ Route::get('dashboard', function () {
 
 // Role and Permission Management Routes
 Route::middleware(['auth', 'verified', AdminMiddleware::class])->group(function () {
+    // User Approval Routes
+    Route::get('/user-approvals', [UserApprovalController::class, 'index'])->name('user-approvals.index');
+    Route::post('/user-approvals/{user}/approve', [UserApprovalController::class, 'approve'])->name('user-approvals.approve');
+    Route::post('/user-approvals/{user}/reject', [UserApprovalController::class, 'reject'])->name('user-approvals.reject');
+
+    // Role and Permission Management Routes
     Route::get('/roles', [RolePermissionController::class, 'index'])->name('roles.index');
     Route::post('/roles', [RolePermissionController::class, 'createRole'])->name('roles.create');
     Route::put('/roles/{role}', [RolePermissionController::class, 'updateRole'])->name('roles.update');
