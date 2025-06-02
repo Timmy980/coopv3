@@ -7,14 +7,30 @@ use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Inertia\Inertia;
 use Illuminate\Validation\Rule;
+use App\Models\User;
 
 class RolePermissionController extends Controller
-{    public function index()
+{
+    public function index(Request $request)
     {
+        $query = User::with('roles')->select('id', 'first_name', 'last_name');
+          if ($request->search) {
+            $search = strtolower($request->search);
+            $query->where(function($q) use ($search) {
+                $q->whereRaw('LOWER(first_name) LIKE ?', ["%{$search}%"])
+                  ->orWhereRaw('LOWER(last_name) LIKE ?', ["%{$search}%"])
+                  ->orWhereRaw("LOWER(CONCAT(first_name, ' ', last_name)) LIKE ?", ["%{$search}%"])
+                  ->orWhereHas('roles', function($q) use ($search) {
+                      $q->whereRaw('LOWER(name) LIKE ?', ["%{$search}%"]);
+                  });
+            });
+        }
+
         return Inertia::render('RolePermission/Index', [
             'roles' => Role::with('permissions')->get(),
             'permissions' => Permission::all(),
-            'users' => \App\Models\User::select('id', 'first_name', 'last_name')->get()
+            'users' => $query->paginate(10)->withQueryString(),
+            'filters' => $request->only(['search'])
         ]);
     }
 
@@ -80,9 +96,22 @@ class RolePermissionController extends Controller
             'role' => ['required', 'exists:roles,name']
         ]);
 
-        $user = \App\Models\User::findOrFail($validated['user_id']);
+        $user = User::findOrFail($validated['user_id']);
         $user->assignRole($validated['role']);
 
         return redirect()->back()->with('success', 'Role assigned successfully.');
+    }
+
+    public function unassignRole(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id' => ['required', 'exists:users,id'],
+            'role' => ['required', 'exists:roles,name']
+        ]);
+
+        $user = User::findOrFail($validated['user_id']);
+        $user->removeRole($validated['role']);
+
+        return redirect()->back()->with('success', 'Role unassigned successfully.');
     }
 }

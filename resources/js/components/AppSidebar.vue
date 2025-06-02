@@ -5,7 +5,7 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Shield } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, Shield, Landmark, Users } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const page = usePage();
@@ -22,14 +22,28 @@ const mainNavItems: NavItem[] = [
         href: route('roles.index'),
         icon: Shield,
     }] : []),
+
+    ...(user?.roles.includes('admin') ? [{
+        title: 'Members Management',
+        href: route('user-approvals.index'),
+        icon: Users,
+    }] : []),
+
+    ...(user?.roles.includes('admin') ? [{
+        title: 'Account Types',
+        href: route('account-types.index'),
+        icon: Folder,
+    }] : []),
+
+    ...(user?.roles.includes('admin') ? [{
+        title: 'Cooperative Accounts',
+        href: route('cooperative_accounts.index'),
+        icon: Landmark,
+    }] : []),
 ];
 
 const footerNavItems: NavItem[] = [
-    {
-        title: 'Github Repo',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: Folder,
-    },
+    
     {
         title: 'Documentation',
         href: 'https://laravel.com/docs/starter-kits#vue',
