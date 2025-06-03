@@ -9,6 +9,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LoanRepayment extends Model
@@ -53,5 +54,13 @@ class LoanRepayment extends Model
     public function receiptAccount(): BelongsTo
     {
         return $this->belongsTo(CooperativeAccount::class, 'coop_account_receipt_id', 'id');
+    }
+
+    /**
+     * Get the payment gateway transaction associated with this loan repayment.
+     */
+    public function paymentGatewayTransaction(): MorphMany
+    {
+        return $this->morphMany(PaymentGatewayTransaction::class, 'transactionable');
     }
 }

@@ -17,29 +17,35 @@ const mainNavItems: NavItem[] = [
         href: route('dashboard'),
         icon: LayoutGrid,
     },
+
+
     ...(user?.roles.includes('admin') ? [{
         title: 'Roles',
         href: route('roles.index'),
         icon: Shield,
-    }] : []),
-
-    ...(user?.roles.includes('admin') ? [{
+    },
+    {
         title: 'Members Management',
         href: route('user-approvals.index'),
         icon: Users,
-    }] : []),
-
-    ...(user?.roles.includes('admin') ? [{
-        title: 'Account Types',
-        href: route('account-types.index'),
-        icon: Folder,
-    }] : []),
-
-    ...(user?.roles.includes('admin') ? [{
+    },
+    {
         title: 'Cooperative Accounts',
         href: route('cooperative_accounts.index'),
         icon: Landmark,
+    },
+    {
+        title: 'Account Types',
+        href: route('account-types.index'),
+        icon: Folder,
+    },
+    {
+        title: 'Member Accounts',
+        href: route('member_accounts.index'),
+        icon: Folder
     }] : []),
+
+
 ];
 
 const footerNavItems: NavItem[] = [

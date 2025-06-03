@@ -7,6 +7,7 @@ use App\Http\Controllers\UserApprovalController;
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Controllers\Admin\MemberAccountTypeController;
 use App\Http\Controllers\Admin\CooperativeAccountController;
+use App\Http\Controllers\MemberAccountController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
@@ -55,6 +56,14 @@ Route::middleware(['auth', 'verified', AdminMiddleware::class])->group(function 
     // Additional route for toggling account status
     Route::patch('cooperative-accounts/{cooperative_account}/toggle-status', [CooperativeAccountController::class, 'toggleStatus'])
          ->name('cooperative_accounts.toggle_status');
+
+    // Member Accounts CRUD
+    Route::get('/member-accounts', [MemberAccountController::class, 'index'])->name('member_accounts.index');
+    Route::get('/member-accounts/{memberAccount}', [MemberAccountController::class, 'show'])->name('member_accounts.show');
+    Route::post('/member-accounts', [MemberAccountController::class, 'store'])->name('member_accounts.store');
+    Route::put('/member-accounts/{memberAccount}', [MemberAccountController::class, 'update'])->name('member_accounts.update');
+    Route::delete('/member-accounts/{memberAccount}', [MemberAccountController::class, 'destroy'])->name('member_accounts.destroy');
+    Route::patch('/member-accounts/{memberAccount}/toggle-status', [MemberAccountController::class, 'toggleStatus'])->name('member_accounts.toggle_status');
 });
 
 require __DIR__.'/settings.php';
