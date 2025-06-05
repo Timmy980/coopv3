@@ -9,7 +9,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Permission\Traits\HasRoles;
-
+use Illuminate\Database\Eloquent\Casts\Attribute;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -125,4 +125,16 @@ class User extends Authenticatable
         return $this->hasMany(JournalEntry::class, 'created_by', 'id');
     }
 
+
+    /**
+     * Get the user's full name.
+     *
+     * @return string
+     */
+    protected function name(): Attribute
+    {
+        return Attribute::get(
+            fn () => "{$this->first_name} {$this->last_name}"
+        );
+    }
 }

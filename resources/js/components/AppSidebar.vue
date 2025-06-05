@@ -5,7 +5,7 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Shield, Landmark, Users } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, Shield, Landmark, Users, Download } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const page = usePage();
@@ -43,9 +43,15 @@ const mainNavItems: NavItem[] = [
         title: 'Member Accounts',
         href: route('member_accounts.index'),
         icon: Folder
-    }] : []),
+    },
 
+] : []),
 
+{
+    title: 'Savings Management',
+    href: route('savings.index'),
+    icon: Folder
+},
 ];
 
 const footerNavItems: NavItem[] = [

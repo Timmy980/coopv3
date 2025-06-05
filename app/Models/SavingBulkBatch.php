@@ -23,6 +23,7 @@ class SavingBulkBatch extends Model
         'total_amount',
         'status', // 'processing', 'completed', 'failed'
         'created_by_id',
+        'account_type_id',
         'notes',
         'completed_at',
     ];
@@ -40,6 +41,11 @@ class SavingBulkBatch extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by_id');
+    }
+
+    public function accountType(): BelongsTo
+    {
+        return $this->belongsTo(AccountType::class);
     }
 
     public function savings(): HasMany
