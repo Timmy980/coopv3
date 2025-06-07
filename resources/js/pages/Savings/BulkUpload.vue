@@ -100,7 +100,7 @@
                                         :key="account.id"
                                         :value="account.id"
                                     >
-                                        {{ account.name }}
+                                        {{ account.account_name }}
                                     </option>
                                 </select>
                                 <InputError :message="form.errors.cooperative_account_id" class="mt-2" />
@@ -118,6 +118,7 @@
                                     required
                                 />
                                 <InputError :message="form.errors.file" class="mt-2" />
+                                <InputError :message="form.errors.import_error" class="mt-2" />
                             </div>
 
                             <div class="flex items-center justify-end">

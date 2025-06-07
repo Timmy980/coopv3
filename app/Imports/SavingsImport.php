@@ -38,11 +38,13 @@ class SavingsImport implements ToModel, WithHeadingRow, WithValidation
         
         if (!$memberAccount) {
             $this->batch->increment('failed_records');
+            $this->batch->increment('total_records');
             return null;
         }
 
         $this->totalAmount += $row['amount'];
         $this->batch->increment('processed_records');
+        $this->batch->increment('total_records');
 
         return new Saving([
             'amount' => $row['amount'],

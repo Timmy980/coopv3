@@ -39,27 +39,47 @@ class SavingBulkController extends Controller
             'account_type_id' => 'required|exists:account_types,id'
         ]);
 
-        // Create bulk batch record
-        $batch = SavingBulkBatch::create([
-            'batch_reference' => 'BULK-' . Str::random(10),
-            'status' => 'processing',
-            'created_by_id' => $request->user()->id,
-            'total_records' => 0,
-            'processed_records' => 0,
-            'failed_records' => 0,
-            'total_amount' => 0,
-            'account_type_id' => $request->account_type_id
-        ]);
+        try {
+            // Create bulk batch record
+            $batch = SavingBulkBatch::create([
+                'batch_reference' => 'BULK-' . Str::random(10),
+                'status' => 'processing',
+                'created_by_id' => $request->user()->id,
+                'total_records' => 0,
+                'processed_records' => 0,
+                'failed_records' => 0,
+                'total_amount' => 0,
+                'account_type_id' => $request->account_type_id
+            ]);
 
-        // Process Excel file
-        Excel::import(new SavingsImport(
-            $batch->id,
-            $request->cooperative_account_id,
-            $request->user()->id,
-            $request->account_type_id
-        ), $request->file('file'));
+            // Process Excel file
+            Excel::import(new SavingsImport(
+                $batch->id,
+                $request->cooperative_account_id,
+                $request->user()->id,
+                $request->account_type_id
+            ), $request->file('file'));
 
-        return redirect()->route('savings.bulk.show', $batch->id);
+            return redirect()->route('savings.bulk.show', $batch->id);
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            // Delete the batch since import failed
+            if (isset($batch)) {
+                $batch->delete();
+            }
+
+            $failures = collect($e->failures())
+                ->map(fn($failure) => "Row {$failure->row()}: {$failure->errors()[0]}")
+                ->implode(', ');
+
+            return back()->withErrors(['import_error' => "Import failed. {$failures}"]);
+        } catch (\Exception $e) {
+            // Delete the batch since import failed
+            if (isset($batch)) {
+                $batch->delete();
+            }
+
+            return back()->withErrors(['import_error' => "Import failed: {$e->getMessage()}"]);
+        }
     }
 
     /**
@@ -84,7 +104,7 @@ class SavingBulkController extends Controller
         $batch->load('createdBy');
         
         $savings = Saving::where('bulk_batch_id', $batch->id)
-            ->with(['memberAccount', 'cooperativeAccount'])
+            ->with(['memberAccount.user', 'cooperativeAccount'])
             ->paginate(15);
 
         return Inertia::render('Savings/BulkBatchShow', [

@@ -71,6 +71,17 @@ class SavingController extends Controller
      */
     public function show(Saving $saving)
     {
+        if (request()->user()->hasRole('member')) {
+            if ($saving->memberAccount->user_id !== Auth::id()) {
+                abort(403);
+            }
+    
+            $saving->load(['memberAccount', 'cooperativeAccount', 'initiatedBy', 'approvedBy', 'rejectedBy']);
+    
+            return Inertia::render('Member/Savings/Show', [
+                'saving' => $saving
+            ]);
+        }
         if (!request()->user()->hasPermissionTo('view savings')) {
             abort(403);
         }
@@ -292,6 +303,10 @@ class SavingController extends Controller
             'status' => Saving::STATUS_APPROVED,
             'approved_by_id' => $request->user()->id,
             'approved_at' => now()
+        ]);
+
+        $saving->memberAccount->update([
+            'balance' => $saving->memberAccount->balance + $saving->amount
         ]);
 
         return back()->with('success', 'Saving has been approved successfully.');

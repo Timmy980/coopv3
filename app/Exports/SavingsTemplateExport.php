@@ -14,7 +14,7 @@ use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
 use PhpOffice\PhpSpreadsheet\Cell\StringValueBinder;
 
-class SavingsTemplateExport extends StringValueBinder implements FromCollection, WithHeadings, ShouldAutoSize, WithStyles, WithColumnFormatting, WithCustomValueBinder
+class SavingsTemplateExport extends StringValueBinder implements FromCollection, WithHeadings, ShouldAutoSize, WithStyles, WithColumnFormatting, WithCustomValueBinder, WithMapping
 {
     protected $accountTypeId;
 
@@ -95,9 +95,21 @@ class SavingsTemplateExport extends StringValueBinder implements FromCollection,
             'A' => NumberFormat::FORMAT_TEXT,
             'B' => NumberFormat::FORMAT_TEXT,
             'C' => NumberFormat::FORMAT_NUMBER_00,
-            'D' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'D' => '@',  // Force text format for date to preserve exact format
             'E' => NumberFormat::FORMAT_TEXT,
             'F' => NumberFormat::FORMAT_TEXT,
+        ];
+    }
+
+    public function map($row): array
+    {
+        return [
+            $row['account_number'],
+            $row['full_name'],
+            $row['amount'],
+            $row['transaction_date'],
+            $row['reference_number'],
+            $row['notes']
         ];
     }
     

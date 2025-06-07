@@ -1,14 +1,18 @@
-<script setup>
+<script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
-import { useForm, usePage, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+import { Head, Link, usePage, useForm, router } from '@inertiajs/vue3';
 import Modal from '@/components/Modal.vue';
 import InputLabel from '@/components/InputLabel.vue';
-import TextInput from '@/components/TextInput.vue';
 import InputError from '@/components/InputError.vue';
 import PrimaryButton from '@/components/PrimaryButton.vue';
 import SecondaryButton from '@/components/SecondaryButton.vue';
+import SavingsHeader from '@/components/savings/SavingsHeader.vue';
+import StatusBanner from '@/components/savings/StatusBanner.vue';
+import TransactionDetailsCard from '@/components/savings/TransactionDetailsCard.vue';
+import AccountInfoCard from '@/components/savings/AccountInfoCard.vue';
+import PaymentProofCard from '@/components/savings/PaymentProofCard.vue';
+import { useSavingsFormatters } from '@/composables/useSavingsFormatters';
 
 const props = defineProps({
     saving: {
@@ -17,64 +21,21 @@ const props = defineProps({
     }
 });
 
-const appUrl = usePage().props.appUrl;
+const page = usePage();
+const appUrl = page.props.appUrl;
 
+// Modal and form state
 const showRejectModal = ref(false);
 const rejectForm = useForm({
     rejection_reason: ''
 });
 
 const errorMessage = ref('');
+const rejectErrorMessage = ref('');
 
-const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-NG', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-};
-
-const formatAmount = (amount) => {
-    return new Intl.NumberFormat('en-NG', {
-        style: 'currency',
-        currency: 'NGN'
-    }).format(amount || 0);
-};
-
-const formatSource = (source) => {
-    const sources = {
-        member_gateway: 'Gateway Payment',
-        member_deposit: 'Bank Deposit',
-        admin_single: 'Admin Entry',
-        admin_bulk: 'Bulk Upload'
-    };
-    return sources[source] || source;
-};
-
-const statusClass = (status) => {
-    const classes = {
-        pending: 'bg-yellow-100 text-yellow-800',
-        approved: 'bg-green-100 text-green-800',
-        rejected: 'bg-red-100 text-red-800',
-        failed: 'bg-gray-100 text-gray-800'
-    };
-    return classes[status] || 'bg-gray-100 text-gray-800';
-};
-
-const sourceClass = (source) => {
-    const classes = {
-        member_gateway: 'bg-blue-100 text-blue-800',
-        member_deposit: 'bg-purple-100 text-purple-800',
-        admin_single: 'bg-indigo-100 text-indigo-800',
-        admin_bulk: 'bg-pink-100 text-pink-800'
-    };
-    return classes[source] || 'bg-gray-100 text-gray-800';
-};
-
+// Action functions
 const approveSaving = () => {
-    errorMessage.value = ''; // Clear any previous error
+    errorMessage.value = '';
     router.put(route('savings.approve', props.saving.id), {
         status: 'approved'
     }, {
@@ -86,162 +47,144 @@ const approveSaving = () => {
 };
 
 const rejectSaving = () => {
+    rejectErrorMessage.value = '';
     rejectForm.put(route('savings.reject', props.saving.id), {
-        status: 'rejected'
-    }, {
         onSuccess: () => {
             showRejectModal.value = false;
             rejectForm.reset();
         },
-        preserveScroll: true
+        preserveScroll: true,
+        onError: (errors) => {
+            rejectErrorMessage.value = errors.saving || errors.rejection_reason || 'An error occurred while rejecting the saving.';
+        }
     });
 };
+
+const { formatDate } = useSavingsFormatters();
 </script>
 
 <template>
+    <Head title="Saving Details" />
+
     <AppLayout>
         <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                Saving Details
-            </h2>
+            <SavingsHeader 
+                title="Saving Details"
+                :status="saving.status"
+                :source="saving.source"
+            />
         </template>
 
         <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+                <!-- Error Message -->
+                <div v-if="errorMessage" class="p-4 rounded-lg bg-red-100 text-red-800 border border-red-200">
+                    {{ errorMessage }}
+                </div>
+
+                <!-- Status Banner -->
+                <StatusBanner 
+                    :status="saving.status"
+                    :rejection-reason="saving.rejection_reason"
+                    :approved-at="saving.approved_at"
+                    :approved-by="saving.approved_by"
+                />
+
+                <!-- Main Content Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Transaction Details Card -->
+                    <div class="lg:col-span-2">
+                        <TransactionDetailsCard 
+                            :amount="saving.amount"
+                            :transaction-date="saving.transaction_date"
+                            :reference-number="saving.reference_number"
+                            :source="saving.source"
+                            :transaction-id="saving.id"
+                            :created-at="saving.created_at"
+                            :show-transaction-id="true"
+                        />
+                    </div>
+
+                    <!-- Account Information Card -->
+                    <AccountInfoCard 
+                        :member-account="saving.member_account"
+                        :cooperative-account="saving.cooperative_account"
+                        :show-member-name="true"
+                    />
+                </div>
+
+                <!-- Additional Information -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Payment Proof Card -->
+                    <PaymentProofCard 
+                        v-if="saving.payment_proof_path" 
+                        :payment-proof-path="saving.payment_proof_path"
+                        :app-url="appUrl" 
+                    />
+
+                    <!-- Activity & Notes Card -->
+                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                        <div class="px-6 py-5 border-b border-gray-200">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Activity & Notes
+                            </h3>
+                        </div>
+                        <div class="px-6 py-5 space-y-4">
+                            <div v-if="saving.notes">
+                                <dt class="text-sm font-medium text-gray-500 mb-1">Notes</dt>
+                                <dd class="text-sm text-gray-600 leading-relaxed">{{ saving.notes }}</dd>
+                            </div>
+                            <div v-if="saving.initiated_by">
+                                <dt class="text-sm font-medium text-gray-500 mb-1">Initiated By</dt>
+                                <dd class="text-sm text-gray-900">{{ saving.initiated_by.first_name }} {{ saving.initiated_by.last_name }}</dd>
+                            </div>
+                            <div v-if="saving.approved_by">
+                                <dt class="text-sm font-medium text-gray-500 mb-1">Approved By</dt>
+                                <dd class="text-sm text-gray-900">{{ saving.approved_by.first_name }} {{ saving.approved_by.last_name }}</dd>
+                            </div>
+                            <div v-if="saving.rejected_by">
+                                <dt class="text-sm font-medium text-gray-500 mb-1">Rejected By</dt>
+                                <dd class="text-sm text-gray-900">{{ saving.rejected_by.first_name }} {{ saving.rejected_by.last_name }}</dd>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <!-- Status Banner -->
-                        <div class="mb-6">
-                            <!-- Error Message -->
-                            <div v-if="errorMessage" class="mb-4 p-4 rounded-lg bg-red-100 text-red-800">
-                                {{ errorMessage }}
+                    <div class="px-6 py-4">
+                        <div class="flex justify-between items-center">
+                            <div class="text-sm text-gray-500">
+                                Last updated: {{ formatDate(saving.updated_at) }}
                             </div>
-                            
-                            <div class="p-4 rounded-lg" :class="statusClass(saving.status)">
-                                <div class="flex items-center">
-                                    <div class="flex-shrink-0">
-                                        <svg v-if="saving.status === 'pending'" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                            <div class="flex items-center space-x-3">
+                                <Link
+                                    :href="route('savings.index')"
+                                    class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                                >
+                                    <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                    </svg>
+                                    Back to Savings
+                                </Link>
+                                
+                                <div v-if="saving.status === 'pending'" class="flex space-x-3">
+                                    <PrimaryButton @click="approveSaving" class="bg-green-600 hover:bg-green-700 focus:ring-green-500">
+                                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                         </svg>
-                                        <svg v-else-if="saving.status === 'approved'" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                        Approve
+                                    </PrimaryButton>
+                                    <SecondaryButton @click="showRejectModal = true" class="text-red-600 border-red-300 hover:bg-red-50">
+                                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                         </svg>
-                                        <svg v-else-if="saving.status === 'rejected'" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                                        </svg>
-                                        <svg v-else class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <div class="ml-3">
-                                        <h3 class="text-sm font-medium capitalize">
-                                            {{ saving.status }}
-                                        </h3>
-                                        <div class="mt-2 text-sm" v-if="saving.status === 'rejected'">
-                                            <p>Reason: {{ saving.rejection_reason }}</p>
-                                        </div>
-                                    </div>
+                                        Reject
+                                    </SecondaryButton>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Main Content -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Transaction Details -->
-                            <div>
-                                <h3 class="text-lg font-medium text-gray-900 mb-4">Transaction Details</h3>
-                                <dl class="space-y-4">
-                                    <div>
-                                        <dt class="text-sm font-medium text-gray-500">Amount</dt>
-                                        <dd class="mt-1 text-sm text-gray-900">{{ formatAmount(saving.amount) }}</dd>
-                                    </div>
-                                    <div>
-                                        <dt class="text-sm font-medium text-gray-500">Transaction Date</dt>
-                                        <dd class="mt-1 text-sm text-gray-900">{{ formatDate(saving.transaction_date) }}</dd>
-                                    </div>
-                                    <div>
-                                        <dt class="text-sm font-medium text-gray-500">Reference Number</dt>
-                                        <dd class="mt-1 text-sm text-gray-900">{{ saving.reference_number || 'N/A' }}</dd>
-                                    </div>
-                                    <div>
-                                        <dt class="text-sm font-medium text-gray-500">Source</dt>
-                                        <dd class="mt-1">
-                                            <span :class="[sourceClass(saving.source), 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium']">
-                                                {{ formatSource(saving.source) }}
-                                            </span>
-                                        </dd>
-                                    </div>
-                                </dl>
-                            </div>
-
-                            <!-- Account Details -->
-                            <div>
-                                <h3 class="text-lg font-medium text-gray-900 mb-4">Account Details</h3>
-                                <dl class="space-y-4">
-                                    <div>
-                                        <dt class="text-sm font-medium text-gray-500">Member Account</dt>
-                                        <dd class="mt-1 text-sm text-gray-900">
-                                            {{ saving.member_account.account_type.name }}
-                                            <span class="text-gray-500">({{ saving.member_account.account_number }})</span>
-                                        </dd>
-                                    </div>
-                                    <div>
-                                        <dt class="text-sm font-medium text-gray-500">Member</dt>
-                                        <dd class="mt-1 text-sm text-gray-900">{{ saving.member_account.user.first_name }} {{ saving.member_account.user.last_name }}</dd>
-                                    </div>
-                                    <div>
-                                        <dt class="text-sm font-medium text-gray-500">Cooperative Account</dt>
-                                        <dd class="mt-1 text-sm text-gray-900">{{ saving.cooperative_account.account_name }}</dd>
-                                    </div>
-                                </dl>
-                            </div>
-
-                            <!-- Additional Information -->
-                            <div class="md:col-span-2">
-                                <h3 class="text-lg font-medium text-gray-900 mb-4">Additional Information</h3>
-                                <dl class="space-y-4">
-                                    <div v-if="saving.notes">
-                                        <dt class="text-sm font-medium text-gray-500">Notes</dt>
-                                        <dd class="mt-1 text-sm text-gray-900">{{ saving.notes }}</dd>
-                                    </div>
-                                    <div v-if="saving.payment_proof_path">
-                                        <dt class="text-sm font-medium text-gray-500">Payment Proof</dt>
-                                        <dd class="mt-1">
-                                            <a :href="appUrl + '/storage/' + saving.payment_proof_path" target="_blank" class="text-indigo-600 hover:text-indigo-900">View Document</a>
-                                        </dd>
-                                    </div>
-                                    <div v-if="saving.initiated_by">
-                                        <dt class="text-sm font-medium text-gray-500">Initiated By</dt>
-                                        <dd class="mt-1 text-sm text-gray-900">{{ saving.initiated_by.name }} on {{ formatDate(saving.created_at) }}</dd>
-                                    </div>
-                                    <div v-if="saving.approved_by">
-                                        <dt class="text-sm font-medium text-gray-500">Approved By</dt>
-                                        <dd class="mt-1 text-sm text-gray-900">{{ saving.approved_by.name }} on {{ formatDate(saving.approved_at) }}</dd>
-                                    </div>
-                                    <div v-if="saving.rejected_by">
-                                        <dt class="text-sm font-medium text-gray-500">Rejected By</dt>
-                                        <dd class="mt-1 text-sm text-gray-900">{{ saving.rejected_by.name }} on {{ formatDate(saving.rejected_at) }}</dd>
-                                    </div>
-                                </dl>
-                            </div>
-                        </div>
-
-                        <!-- Actions -->
-                        <div class="mt-8 flex justify-between">
-                            <Link
-                                :href="route('savings.index')"
-                                class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                            >
-                                Back to Savings
-                            </Link>
-                            
-                            <div v-if="saving.status === 'pending'" class="flex space-x-3">
-                                <PrimaryButton @click="approveSaving">
-                                    Approve
-                                </PrimaryButton>
-                                <SecondaryButton @click="showRejectModal = true">
-                                    Reject
-                                </SecondaryButton>
                             </div>
                         </div>
                     </div>
@@ -252,18 +195,36 @@ const rejectSaving = () => {
         <!-- Reject Modal -->
         <Modal :show="showRejectModal" @close="showRejectModal = false">
             <div class="p-6">
-                <h2 class="text-lg font-medium text-gray-900">
+                <div class="flex items-center mb-4">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                        <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                    </div>
+                </div>
+                
+                <h2 class="text-lg font-medium text-gray-900 text-center mb-2">
                     Reject Saving
                 </h2>
+                
+                <p class="text-sm text-gray-500 text-center mb-6">
+                    Please provide a reason for rejecting this saving transaction.
+                </p>
 
-                <form @submit.prevent="rejectSaving" class="mt-6">
+                <!-- Error Message -->
+                <div v-if="rejectErrorMessage" class="mb-4 p-4 rounded-lg bg-red-100 text-red-800 border border-red-200">
+                    {{ rejectErrorMessage }}
+                </div>
+
+                <form @submit.prevent="rejectSaving">
                     <div>
                         <InputLabel for="rejection_reason" value="Rejection Reason" />
                         <textarea
                             id="rejection_reason"
                             v-model="rejectForm.rejection_reason"
-                            class="mt-1 block w-full rounded-md border-gray-300"
-                            rows="3"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            rows="4"
+                            placeholder="Please provide a detailed reason for rejection..."
                             required
                         ></textarea>
                         <InputError :message="rejectForm.errors.rejection_reason" class="mt-2" />
@@ -273,12 +234,20 @@ const rejectSaving = () => {
                         <SecondaryButton type="button" @click="showRejectModal = false">
                             Cancel
                         </SecondaryButton>
-                        <PrimaryButton type="submit" :disabled="rejectForm.processing">
-                            Reject
+                        <PrimaryButton 
+                            type="submit" 
+                            :disabled="rejectForm.processing"
+                            class="bg-red-600 hover:bg-red-700 focus:ring-red-500"
+                        >
+                            <svg v-if="rejectForm.processing" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Reject Saving
                         </PrimaryButton>
                     </div>
                 </form>
             </div>
         </Modal>
     </AppLayout>
-</template> 
+</template>
