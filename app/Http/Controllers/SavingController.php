@@ -57,7 +57,7 @@ class SavingController extends Controller
                 'cooperativeAccounts' => CooperativeAccount::active()->get(),
             ]);
         } else {
-            return Inertia::render('Savings/Index', [
+            return Inertia::render('Admin/Savings/Index', [
                 'savings' => $savings,
                 'filters' => $request->only(['status', 'source', 'date_from', 'date_to']),
                 'memberAccounts' => MemberAccount::with(['accountType', 'user'])->get(),
@@ -97,7 +97,7 @@ class SavingController extends Controller
             'paymentGatewayTransaction'
         ])->find($saving->id);
 
-        return Inertia::render('Savings/Show', [
+        return Inertia::render('Admin/Savings/Show', [
             'saving' => $saving
         ]);
     }
@@ -347,7 +347,7 @@ class SavingController extends Controller
             ->latest()
             ->paginate(15);
 
-        return Inertia::render('Savings/PendingApproval', [
+        return Inertia::render('Admin/Savings/PendingApproval', [
             'savings' => $savings
         ]);
     }
@@ -378,7 +378,7 @@ class SavingController extends Controller
 
         $savings = $query->latest()->paginate(15);
 
-        return Inertia::render('Savings/Reports', [
+        return Inertia::render('Admin/Savings/Reports', [
             'savings' => $savings,
             'filters' => $request->all()
         ]);

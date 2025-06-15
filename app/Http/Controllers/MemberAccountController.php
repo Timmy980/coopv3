@@ -53,7 +53,7 @@ class MemberAccountController extends Controller
             'suspended' => 'Suspended'
         ];
 
-        return Inertia::render('memberAccounts/Index', [
+        return Inertia::render('Admin/memberAccounts/Index', [
             'accounts' => $accounts,
             'filters' => $request->only(['search', 'status', 'account_type']),
             'accountTypes' => $accountTypes,
@@ -75,7 +75,7 @@ class MemberAccountController extends Controller
             }
         ]);
 
-        return Inertia::render('memberAccounts/Show', [
+        return Inertia::render('Admin/memberAccounts/Show', [
             'account' => $memberAccount
         ]);
     }

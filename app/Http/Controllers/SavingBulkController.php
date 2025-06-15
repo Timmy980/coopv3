@@ -22,7 +22,7 @@ class SavingBulkController extends Controller
      */
     public function showUploadForm()
     {
-        return Inertia::render('Savings/BulkUpload', [
+        return Inertia::render('Admin/Savings/BulkUpload', [
             'cooperative_accounts' => CooperativeAccount::active()->get(),
             'account_types' => AccountType::all()
         ]);
@@ -91,7 +91,7 @@ class SavingBulkController extends Controller
             ->latest()
             ->paginate(15);
 
-        return Inertia::render('Savings/BulkBatches', [
+        return Inertia::render('Admin/Savings/BulkBatches', [
             'batches' => $batches
         ]);
     }
@@ -107,7 +107,7 @@ class SavingBulkController extends Controller
             ->with(['memberAccount.user', 'cooperativeAccount'])
             ->paginate(15);
 
-        return Inertia::render('Savings/BulkBatchShow', [
+        return Inertia::render('Admin/Savings/BulkBatchShow', [
             'batch' => $batch,
             'savings' => $savings
         ]);

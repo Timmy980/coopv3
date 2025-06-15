@@ -1,21 +1,32 @@
+export interface BreadcrumbItem {
+    title: string;
+    href: string;
+}
+
 export interface User {
     id: number;
     first_name: string;
     last_name: string;
     email: string;
+    phone_number?: string;
 }
 
 export interface AccountType {
     id: number;
     name: string;
-    code: string;
+    description?: string;
+    interest_rate: number;
 }
 
 export interface MemberAccount {
     id: number;
     account_number: string;
     user?: User;
-    account_type?: AccountType;
+    account_type: AccountType;
+    balance: number;
+    status: 'active' | 'inactive' | 'suspended';
+    savings_count: number;
+    withdrawal_requests_count: number;
 }
 
 export interface CooperativeAccount {

@@ -44,9 +44,20 @@ const mainNavItems: NavItem[] = [
         href: route('member_accounts.index'),
         icon: Folder
     },
+    
 
 ] : []),
-
+...(user?.roles.includes('member') ? [{
+    title: 'Accounts',
+    href: route('member.accounts.index'),
+    icon: Folder
+},
+{
+        title: 'Withdrawal Requests',
+        href: route('member.withdrawal-requests.index'),
+        icon: Download,
+    },
+] : []),
 {
     title: 'Savings Management',
     href: route('savings.index'),

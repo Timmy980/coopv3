@@ -33,7 +33,7 @@ class CooperativeAccountController extends Controller
             ->paginate(10)
             ->appends($request->query());
 
-        return Inertia::render('admin/cooperativeAccounts/Index', [
+        return Inertia::render('Admin/cooperativeAccounts/Index', [
             'accounts' => $accounts,
             'filters' => [
                 'search' => $search,
@@ -109,7 +109,7 @@ class CooperativeAccountController extends Controller
                              $cooperativeAccount->disbursedWithdrawals->sum('requested_amount');
         $totalRepayments = $cooperativeAccount->receivedLoanRepayments->sum('amount');
 
-        return Inertia::render('admin/cooperativeAccounts/Show', [
+        return Inertia::render('Admin/cooperativeAccounts/Show', [
             'account' => $cooperativeAccount,
             'summary' => [
                 'total_savings' => $totalSavings,

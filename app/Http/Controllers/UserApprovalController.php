@@ -13,7 +13,7 @@ class UserApprovalController extends Controller
 {
     public function index()
     {
-        return Inertia::render('UserApproval/Index', [
+        return Inertia::render('Admin/UserApproval/Index', [
             'users' => User::where('status', 'pending_approval')
                 ->select('id', 'first_name', 'last_name', 'email', 'phone_number', 'created_at')
                 ->orderBy('created_at', 'desc')
