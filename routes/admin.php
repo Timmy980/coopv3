@@ -10,6 +10,8 @@ use App\Http\Controllers\Admin\CooperativeAccountController;
 use App\Http\Controllers\MemberAccountController;
 use App\Http\Controllers\SavingBulkController;
 use App\Http\Controllers\SavingController;
+use App\Http\Controllers\Admin\WithdrawalRequestController;
+
 
 // Role and Permission Management Routes
 Route::middleware(['auth', 'verified', AdminMiddleware::class])->group(function () {
@@ -89,5 +91,17 @@ Route::middleware(['auth', 'verified', AdminMiddleware::class])->group(function 
             Route::get('/pending-approval', [SavingController::class, 'pendingApproval'])->name('pending');
             Route::get('/reports', [SavingController::class, 'reports'])->name('reports');
         });
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Withdrawal Requests Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('withdrawals')->name('withdrawals.')->group(function () {
+        Route::get('/', [WithdrawalRequestController::class, 'index'])->name('index');
+        Route::get('/{withdrawalRequest}', [WithdrawalRequestController::class, 'show'])->name('show');
+        Route::patch('/{withdrawalRequest}/approve', [WithdrawalRequestController::class, 'approve'])->name('approve');
+        Route::patch('/{withdrawalRequest}/reject', [WithdrawalRequestController::class, 'reject'])->name('reject');
     });
 });

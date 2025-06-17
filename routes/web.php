@@ -22,7 +22,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('savings.show');
 
     
-
 });
 
 require __DIR__ . '/settings.php';

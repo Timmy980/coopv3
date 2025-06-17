@@ -92,11 +92,11 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Link } from '@inertiajs/vue3';
 import { 
-    CheckCircleIcon, 
-    XCircleIcon, 
-    ClockIcon, 
-    BanknotesIcon 
-} from '@heroicons/vue/24/solid';
+    CircleCheck, 
+    CircleX, 
+    Clock, 
+    Banknote 
+} from 'lucide-vue-next';
 
 const props = defineProps({
     withdrawalRequest: {
@@ -106,14 +106,14 @@ const props = defineProps({
 });
 
 const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-NG', {
         style: 'currency',
-        currency: 'PHP'
+        currency: 'NGN'
     }).format(amount);
 };
 
 const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
+    return new Date(date).toLocaleDateString('en-NG', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
@@ -142,12 +142,12 @@ const getStatusBannerClass = (status) => {
 
 const getStatusIcon = (status) => {
     const icons = {
-        pending: ClockIcon,
-        approved: CheckCircleIcon,
-        rejected: XCircleIcon,
-        disbursed: BanknotesIcon
+        pending: Clock,
+        approved: CircleCheck,
+        rejected: CircleX,
+        disbursed: Banknote
     };
-    return icons[status] || ClockIcon;
+    return icons[status] || Clock;
 };
 
 const getStatusMessage = (status) => {

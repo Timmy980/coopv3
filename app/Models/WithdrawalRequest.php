@@ -31,6 +31,7 @@ class WithdrawalRequest extends Model
         'disbursement_date',
         'member_bank_account_for_receipt',
         'coop_account_disbursement_id',
+        'rejection_reason',
     ];
 
     protected $casts = [
@@ -65,5 +66,29 @@ class WithdrawalRequest extends Model
     public function disbursementAccount(): BelongsTo
     {
         return $this->belongsTo(CooperativeAccount::class, 'coop_account_disbursement_id', 'id');
+    }
+
+    /**
+     * Scope a query to only include pending requests.
+     */
+    public function scopePending($query)
+    {
+        return $query->where('status', 'pending');
+    }
+
+    /**
+     * Scope a query to only include approved requests.
+     */
+    public function scopeApproved($query)
+    {
+        return $query->where('status', 'approved');
+    }
+
+    /**
+     * Scope a query to only include rejected requests.
+     */
+    public function scopeRejected($query)
+    {
+        return $query->where('status', 'rejected');
     }
 }

@@ -117,14 +117,14 @@ export default {
 
     methods: {
         formatCurrency(amount) {
-            return new Intl.NumberFormat('en-US', {
+            return new Intl.NumberFormat('en-NG', {
                 style: 'currency',
-                currency: 'PHP'
+                currency: 'NGN'
             }).format(amount)
         },
 
         formatDate(date) {
-            return new Date(date).toLocaleDateString('en-US', {
+            return new Date(date).toLocaleDateString('en-NG', {
                 year: 'numeric',
                 month: 'short',
                 day: 'numeric',

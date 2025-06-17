@@ -73,3 +73,22 @@ export interface SavingsFilterData {
     date_from: string;
     date_to: string;
 } 
+
+export interface WithdrawalFilters {
+    status: string;
+    start_date: string;
+    end_date: string;
+    search: string;
+} 
+
+export interface WithdrawalRequest {
+    id: number;
+    user: User;
+    member_account: MemberAccount;
+    requested_amount: number;
+    member_bank_account_for_receipt: string;
+    status: string;
+    request_date: string;
+    approval_date: string;
+    rejection_reason: string;
+}

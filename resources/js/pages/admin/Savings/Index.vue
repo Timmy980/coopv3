@@ -13,7 +13,7 @@ import SavingsTable from '@/components/savings/SavingsTable.vue';
 import SavingsFilters from '@/components/savings/SavingsFilters.vue';
 import SavingsHeader from '@/components/savings/SavingsHeader.vue';
 import AccountFormFields from '@/components/savings/AccountFormFields.vue';
-import type { PaginatedData, Saving, MemberAccount, CooperativeAccount, SavingsFilterData } from '@/types';
+import type { PaginatedData, Saving, MemberAccount, CooperativeAccount, SavingsFilterData, BreadcrumbItem } from '@/types';
 
 interface Props {
     savings: PaginatedData<Saving>;
@@ -23,6 +23,13 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Savings',
+        href: route('savings.index'),
+    },
+];
 
 // Reactive filter state
 const statusFilter = ref(props.filters?.status ?? '');
@@ -97,7 +104,7 @@ watch([statusFilter, sourceFilter, dateFromFilter, dateToFilter], () => {
 <template>
     <Head title="Savings Management" />
 
-    <AppLayout>
+    <AppLayout :breadcrumbs="breadcrumbs">
         <template #header>
             <SavingsHeader 
                 title="Savings Management"
