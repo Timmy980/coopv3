@@ -24,11 +24,14 @@ class AccountType extends Model
         'description',
         'withdrawal_rules',
         'interest_rate',
+        'auto_create',
+        'status', // 'active', 'inactive', 'suspended'
     ];
 
     protected $casts = [
         'withdrawal_rules' => 'array', // Cast JSONB to array
         'interest_rate' => 'decimal:2',
+        'auto_create' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

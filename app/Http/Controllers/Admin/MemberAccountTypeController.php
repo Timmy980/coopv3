@@ -29,7 +29,7 @@ class MemberAccountTypeController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return Inertia::render('admin/memberAccountTypes/Index', [
+        return Inertia::render('Admin/memberAccountTypes/Index', [
             'accountTypes' => $accountTypes,
             'filters' => [
                 'search' => $search,

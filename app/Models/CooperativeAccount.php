@@ -83,5 +83,10 @@ class CooperativeAccount extends Model
     {
         return $this->morphMany(JournalEntry::class, 'credit_accountable');
     }
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active');
+    }
     
 }

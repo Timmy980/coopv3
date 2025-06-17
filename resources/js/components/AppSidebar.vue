@@ -5,7 +5,7 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Shield, Landmark, Users } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, Shield, Landmark, Users, Download, PiggyBank } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 
 const page = usePage();
@@ -17,29 +17,56 @@ const mainNavItems: NavItem[] = [
         href: route('dashboard'),
         icon: LayoutGrid,
     },
+
+
     ...(user?.roles.includes('admin') ? [{
         title: 'Roles',
         href: route('roles.index'),
         icon: Shield,
-    }] : []),
-
-    ...(user?.roles.includes('admin') ? [{
+    },
+    {
         title: 'Members Management',
         href: route('user-approvals.index'),
         icon: Users,
-    }] : []),
-
-    ...(user?.roles.includes('admin') ? [{
-        title: 'Account Types',
-        href: route('account-types.index'),
-        icon: Folder,
-    }] : []),
-
-    ...(user?.roles.includes('admin') ? [{
+    },
+    {
         title: 'Cooperative Accounts',
         href: route('cooperative_accounts.index'),
         icon: Landmark,
-    }] : []),
+    },
+    {
+        title: 'Account Types',
+        href: route('account-types.index'),
+        icon: Folder,
+    },
+    {
+        title: 'Member Accounts',
+        href: route('member_accounts.index'),
+        icon: Folder
+    },
+    {
+        title: 'Withdrawal Requests',
+        href: route('withdrawals.index'),
+        icon: Download,
+    }
+
+] : []),
+...(user?.roles.includes('member') ? [{
+    title: 'Accounts',
+    href: route('member.accounts.index'),
+    icon: Folder
+},
+{
+        title: 'Withdrawal Requests',
+        href: route('member.withdrawal-requests.index'),
+        icon: Download,
+    },
+] : []),
+{
+    title: 'Savings Management',
+    href: route('savings.index'),
+    icon: PiggyBank
+},
 ];
 
 const footerNavItems: NavItem[] = [
