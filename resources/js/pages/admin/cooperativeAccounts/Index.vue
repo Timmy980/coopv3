@@ -31,11 +31,12 @@ const props = defineProps({
 
 const search = ref(props.filters?.search ?? '');
 const statusFilter = ref(props.filters?.status ?? '');
+const showMobileFilters = ref(false);
 
 // Debounced search function
 const performSearch = () => {
     router.get(
-        route('cooperative_accounts.index'),
+        route('admin.accounts.cooperative.index'),
         { 
             search: search.value,
             status: statusFilter.value
@@ -75,7 +76,7 @@ const showCreateModal = ref(false);
 const showEditModal = ref(false);
 
 const submitCreate = () => {
-    createForm.post(route('cooperative_accounts.store'), {
+    createForm.post(route('admin.accounts.cooperative.store'), {
         onSuccess: () => {
             showCreateModal.value = false;
             createForm.reset();
@@ -94,7 +95,7 @@ const openEdit = (account) => {
 };
 
 const submitEdit = () => {
-    editForm.put(route('cooperative_accounts.update', editForm.id), {
+    editForm.put(route('admin.accounts.cooperative.update', editForm.id), {
         onSuccess: () => {
             showEditModal.value = false;
             editForm.reset();
@@ -104,14 +105,14 @@ const submitEdit = () => {
 
 const deleteAccount = (account) => {
     if (confirm(`Are you sure you want to delete "${account.account_name}"? This action cannot be undone.`)) {
-        router.delete(route('cooperative_accounts.destroy', account.id));
+        router.delete(route('admin.accounts.cooperative.destroy', account.id));
     }
 };
 
 const toggleStatus = (account) => {
     const action = account.status === 'active' ? 'deactivate' : 'activate';
     if (confirm(`Are you sure you want to ${action} "${account.account_name}"?`)) {
-        router.patch(route('cooperative_accounts.toggle_status', account.id));
+        router.patch(route('admin.accounts.cooperative.toggle-status', account.id));
     }
 };
 
@@ -138,8 +139,13 @@ const formatCurrency = (amount) => {
 const clearFilters = () => {
     search.value = '';
     statusFilter.value = '';
+    showMobileFilters.value = false;
     performSearch();
 };
+
+const hasActiveFilters = computed(() => {
+    return search.value || statusFilter.value;
+});
 </script>
 
 <template>
@@ -147,38 +153,52 @@ const clearFilters = () => {
 
     <AppLayout>
         <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                Cooperative Accounts Management
-            </h2>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                    Cooperative Accounts Management
+                </h2>
+                <div class="flex items-center gap-2">
+                    <!-- Mobile filter toggle -->
+                    <SecondaryButton 
+                        @click="showMobileFilters = !showMobileFilters"
+                        class="sm:hidden"
+                    >
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z"></path>
+                        </svg>
+                        Filters
+                        <span v-if="hasActiveFilters" class="ml-1 bg-blue-500 text-white text-xs rounded-full px-2 py-0.5">
+                            {{ (search ? 1 : 0) + (statusFilter ? 1 : 0) }}
+                        </span>
+                    </SecondaryButton>
+                    <PrimaryButton @click="showCreateModal = true" class="text-sm">
+                        <span class="hidden sm:inline">Create Account</span>
+                        <span class="sm:hidden">Create</span>
+                    </PrimaryButton>
+                </div>
+            </div>
         </template>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
-                        <h3 class="text-lg font-semibold">Cooperative Accounts</h3>
-                        <div class="flex flex-col sm:flex-row gap-2">
-                            <PrimaryButton @click="showCreateModal = true">Create Account</PrimaryButton>
-                        </div>
-                    </div>
-
-                    <!-- Filters -->
-                    <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="py-4 sm:py-8 lg:py-12">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <!-- Mobile Filters Dropdown -->
+                    <div v-if="showMobileFilters" class="sm:hidden border-b border-gray-200 p-4 space-y-4">
                         <div>
-                            <InputLabel for="search" value="Search" />
+                            <InputLabel for="mobile-search" value="Search" />
                             <TextInput
-                                id="search"
+                                id="mobile-search"
                                 type="text"
                                 :modelValue="search"
                                 @update:modelValue="(value) => search = value"
                                 class="w-full"
-                                placeholder="Search by name, account number, or bank..."
+                                placeholder="Search accounts..."
                             />
                         </div>
                         <div>
-                            <InputLabel for="status" value="Status" />
+                            <InputLabel for="mobile-status" value="Status" />
                             <select
-                                id="status"
+                                id="mobile-status"
                                 v-model="statusFilter"
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                             >
@@ -188,20 +208,132 @@ const clearFilters = () => {
                                 </option>
                             </select>
                         </div>
-                        <div class="flex items-end">
-                            <SecondaryButton @click="clearFilters" class="w-full">Clear Filters</SecondaryButton>
+                        <div class="flex gap-2">
+                            <SecondaryButton @click="clearFilters" class="flex-1">Clear</SecondaryButton>
+                            <PrimaryButton @click="showMobileFilters = false" class="flex-1">Apply</PrimaryButton>
+                        </div>
+                    </div>
+
+                    <!-- Desktop Filters -->
+                    <div class="hidden sm:block p-6 border-b border-gray-200">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <InputLabel for="search" value="Search" />
+                                <TextInput
+                                    id="search"
+                                    type="text"
+                                    :modelValue="search"
+                                    @update:modelValue="(value) => search = value"
+                                    class="w-full"
+                                    placeholder="Search by name, account number, or bank..."
+                                />
+                            </div>
+                            <div>
+                                <InputLabel for="status" value="Status" />
+                                <select
+                                    id="status"
+                                    v-model="statusFilter"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                >
+                                    <option value="">All Statuses</option>
+                                    <option v-for="(label, status) in statuses" :key="status" :value="status">
+                                        {{ label }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="flex items-end">
+                                <SecondaryButton @click="clearFilters" class="w-full">Clear Filters</SecondaryButton>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Accounts List -->
-                    <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="p-4 sm:p-6">
                         <div class="space-y-4">
-                            <div v-for="account in accounts.data" :key="account.id" class="bg-white p-4 rounded shadow-sm">
-                                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                                    <div class="flex-grow">
-                                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
+                            <!-- Mobile Card Layout -->
+                            <div v-for="account in accounts.data" :key="account.id" class="bg-gray-50 rounded-lg p-4 sm:hidden">
+                                <div class="space-y-3">
+                                    <!-- Header -->
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex-1 min-w-0">
+                                            <h4 class="font-semibold text-lg text-gray-800 truncate">{{ account.account_name }}</h4>
+                                            <p class="text-sm text-gray-600">{{ account.account_number }}</p>
+                                        </div>
+                                        <div class="flex flex-col items-end gap-1 ml-2">
+                                            <span class="text-xs px-2 py-1 rounded whitespace-nowrap" :class="getStatusClass(account.status)">
+                                                {{ statuses[account.status] }}
+                                            </span>
+                                            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded whitespace-nowrap">
+                                                {{ accountTypes[account.account_type] }}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Details -->
+                                    <div class="space-y-2 text-sm">
+                                        <div v-if="account.bank_name" class="flex justify-between">
+                                            <span class="text-gray-600">Bank:</span>
+                                            <span class="font-medium">{{ account.bank_name }}</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Balance:</span>
+                                            <span class="font-semibold text-green-600">{{ formatCurrency(account.balance) }}</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Transaction Stats -->
+                                    <div class="grid grid-cols-2 gap-2 text-xs">
+                                        <div class="bg-white px-2 py-1 rounded text-center">
+                                            <div class="font-medium">{{ account.savings_count }}</div>
+                                            <div class="text-gray-600">Savings</div>
+                                        </div>
+                                        <div class="bg-white px-2 py-1 rounded text-center">
+                                            <div class="font-medium">{{ account.disbursed_loans_count }}</div>
+                                            <div class="text-gray-600">Loans</div>
+                                        </div>
+                                        <div class="bg-white px-2 py-1 rounded text-center">
+                                            <div class="font-medium">{{ account.received_loan_repayments_count }}</div>
+                                            <div class="text-gray-600">Repayments</div>
+                                        </div>
+                                        <div class="bg-white px-2 py-1 rounded text-center">
+                                            <div class="font-medium">{{ account.disbursed_withdrawals_count }}</div>
+                                            <div class="text-gray-600">Withdrawals</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Actions -->
+                                    <div class="grid grid-cols-2 gap-2 pt-2">
+                                        <Link :href="route('admin.accounts.cooperative.show', account.id)" class="w-full">
+                                            <SecondaryButton class="w-full text-xs">View</SecondaryButton>
+                                        </Link>
+                                        <PrimaryButton @click="openEdit(account)" class="w-full text-xs">Edit</PrimaryButton>
+                                        <SecondaryButton 
+                                            @click="toggleStatus(account)"
+                                            :class="account.status === 'active' ? 'bg-yellow-500 hover:bg-yellow-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'"
+                                            class="w-full text-xs"
+                                        >
+                                            {{ account.status === 'active' ? 'Deactivate' : 'Activate' }}
+                                        </SecondaryButton>
+                                        <DangerButton 
+                                            @click="deleteAccount(account)"
+                                            :disabled="account.savings_count > 0 || account.disbursed_loans_count > 0 || account.received_loan_repayments_count > 0 || account.disbursed_withdrawals_count > 0"
+                                            :title="(account.savings_count > 0 || account.disbursed_loans_count > 0 || account.received_loan_repayments_count > 0 || account.disbursed_withdrawals_count > 0) ? 'Cannot delete account with existing transactions' : ''"
+                                            class="w-full text-xs"
+                                        >
+                                            Delete
+                                        </DangerButton>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Desktop/Tablet Card Layout -->
+                            <div v-for="account in accounts.data" :key="account.id" class="hidden sm:block bg-gray-50 rounded-lg p-6">
+                                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                                    <div class="flex-grow space-y-3">
+                                        <!-- Header -->
+                                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                             <h4 class="font-semibold text-lg text-gray-800">{{ account.account_name }}</h4>
-                                            <div class="flex items-center gap-4 mt-2 sm:mt-0">
+                                            <div class="flex items-center gap-4">
                                                 <span class="text-sm px-2 py-1 rounded" :class="getStatusClass(account.status)">
                                                     {{ statuses[account.status] }}
                                                 </span>
@@ -211,36 +343,39 @@ const clearFilters = () => {
                                             </div>
                                         </div>
                                         
-                                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600">
-                                            <div>
-                                                <span class="font-medium">Account Number:</span>
-                                                <span class="ml-1">{{ account.account_number }}</span>
+                                        <!-- Details Grid -->
+                                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 text-sm text-gray-600">
+                                            <div class="flex flex-col">
+                                                <span class="font-medium text-gray-800">Account Number</span>
+                                                <span>{{ account.account_number }}</span>
                                             </div>
-                                            <div v-if="account.bank_name">
-                                                <span class="font-medium">Bank:</span>
-                                                <span class="ml-1">{{ account.bank_name }}</span>
+                                            <div v-if="account.bank_name" class="flex flex-col">
+                                                <span class="font-medium text-gray-800">Bank</span>
+                                                <span>{{ account.bank_name }}</span>
                                             </div>
-                                            <div>
-                                                <span class="font-medium">Balance:</span>
-                                                <span class="ml-1 font-semibold text-green-600">{{ formatCurrency(account.balance) }}</span>
+                                            <div class="flex flex-col">
+                                                <span class="font-medium text-gray-800">Balance</span>
+                                                <span class="font-semibold text-green-600">{{ formatCurrency(account.balance) }}</span>
                                             </div>
-                                            <div class="flex flex-wrap gap-2 text-xs">
-                                                <span class="bg-gray-100 px-2 py-1 rounded">{{ account.savings_count }} Savings</span>
-                                                <span class="bg-gray-100 px-2 py-1 rounded">{{ account.disbursed_loans_count }} Loans</span>
-                                                <span class="bg-gray-100 px-2 py-1 rounded">{{ account.received_loan_repayments_count }} Repayments</span>
-                                                <span class="bg-gray-100 px-2 py-1 rounded">{{ account.disbursed_withdrawals_count }} Withdrawals</span>
+                                            <div class="flex flex-wrap gap-1">
+                                                <span class="bg-white px-2 py-1 rounded text-xs">{{ account.savings_count }} Savings</span>
+                                                <span class="bg-white px-2 py-1 rounded text-xs">{{ account.disbursed_loans_count }} Loans</span>
+                                                <span class="bg-white px-2 py-1 rounded text-xs">{{ account.received_loan_repayments_count }} Repay.</span>
+                                                <span class="bg-white px-2 py-1 rounded text-xs">{{ account.disbursed_withdrawals_count }} Withdrw.</span>
                                             </div>
                                         </div>
                                     </div>
                                     
-                                    <div class="flex flex-col sm:flex-row gap-2">
-                                        <Link :href="route('cooperative_accounts.show', account.id)">
-                                            <SecondaryButton>View</SecondaryButton>
+                                    <!-- Actions -->
+                                    <div class="flex flex-wrap gap-2 lg:flex-col lg:w-auto">
+                                        <Link :href="route('admin.accounts.cooperative.show', account.id)">
+                                            <SecondaryButton class="text-sm">View</SecondaryButton>
                                         </Link>
-                                        <PrimaryButton @click="openEdit(account)">Edit</PrimaryButton>
+                                        <PrimaryButton @click="openEdit(account)" class="text-sm">Edit</PrimaryButton>
                                         <SecondaryButton 
                                             @click="toggleStatus(account)"
                                             :class="account.status === 'active' ? 'bg-yellow-500 hover:bg-yellow-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'"
+                                            class="text-sm"
                                         >
                                             {{ account.status === 'active' ? 'Deactivate' : 'Activate' }}
                                         </SecondaryButton>
@@ -248,6 +383,7 @@ const clearFilters = () => {
                                             @click="deleteAccount(account)"
                                             :disabled="account.savings_count > 0 || account.disbursed_loans_count > 0 || account.received_loan_repayments_count > 0 || account.disbursed_withdrawals_count > 0"
                                             :title="(account.savings_count > 0 || account.disbursed_loans_count > 0 || account.received_loan_repayments_count > 0 || account.disbursed_withdrawals_count > 0) ? 'Cannot delete account with existing transactions' : ''"
+                                            class="text-sm"
                                         >
                                             Delete
                                         </DangerButton>
@@ -258,31 +394,47 @@ const clearFilters = () => {
                         
                         <!-- Pagination -->
                         <div class="mt-6" v-if="accounts.data.length > 0">
-                            <div class="flex items-center justify-between">
-                                <div class="text-sm text-gray-600">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                <div class="text-sm text-gray-600 text-center sm:text-left">
                                     Showing {{ accounts.from }} - {{ accounts.to }} of {{ accounts.total }} accounts
                                 </div>
-                                <div class="flex gap-1">
+                                <div class="flex flex-wrap justify-center gap-1">
                                     <Link
                                         v-for="(link, i) in accounts.links"
                                         :key="i"
                                         :href="link.url"
                                         v-html="link.label"
-                                        class="px-3 py-1 rounded text-sm"
+                                        class="px-3 py-2 rounded text-sm min-w-[40px] text-center"
                                         :class="{ 
                                             'bg-blue-500 text-white': link.active,
-                                            'text-gray-600 hover:bg-gray-100': !link.active && link.url,
-                                            'text-gray-400': !link.url 
+                                            'text-gray-600 hover:bg-gray-100 bg-white': !link.active && link.url,
+                                            'text-gray-400 bg-gray-100': !link.url 
                                         }"
                                     />
                                 </div>
                             </div>
                         </div>
-                        <div v-else-if="search || statusFilter" class="text-center py-4 text-gray-500">
-                            No accounts found matching your filters
+                        
+                        <!-- Empty States -->
+                        <div v-else-if="search || statusFilter" class="text-center py-12">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <h3 class="mt-2 text-sm font-medium text-gray-900">No accounts found</h3>
+                            <p class="mt-1 text-sm text-gray-500">No accounts matching your current filters</p>
+                            <div class="mt-6">
+                                <SecondaryButton @click="clearFilters">Clear all filters</SecondaryButton>
+                            </div>
                         </div>
-                        <div v-else class="text-center py-4 text-gray-500">
-                            No cooperative accounts available
+                        <div v-else class="text-center py-12">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                            <h3 class="mt-2 text-sm font-medium text-gray-900">No cooperative accounts</h3>
+                            <p class="mt-1 text-sm text-gray-500">Get started by creating a new cooperative account</p>
+                            <div class="mt-6">
+                                <PrimaryButton @click="showCreateModal = true">Create Account</PrimaryButton>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -291,10 +443,10 @@ const clearFilters = () => {
 
         <!-- Create Account Modal -->
         <Modal :show="showCreateModal" @close="showCreateModal = false">
-            <div class="p-6">
+            <div class="p-4 sm:p-6 max-h-screen overflow-y-auto">
                 <h2 class="text-lg font-medium mb-4">Create New Cooperative Account</h2>
                 <form @submit.prevent="submitCreate" class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 gap-4">
                         <div>
                             <InputLabel for="createAccountName" value="Account Name" />
                             <TextInput
@@ -306,6 +458,7 @@ const clearFilters = () => {
                             />
                             <div v-if="createForm.errors.account_name" class="text-red-600 text-sm mt-1">{{ createForm.errors.account_name }}</div>
                         </div>
+                        
                         <div>
                             <InputLabel for="createAccountType" value="Account Type" />
                             <select
@@ -321,19 +474,7 @@ const clearFilters = () => {
                             </select>
                             <div v-if="createForm.errors.account_type" class="text-red-600 text-sm mt-1">{{ createForm.errors.account_type }}</div>
                         </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <InputLabel for="createBankName" value="Bank Name (Optional)" />
-                            <TextInput
-                                id="createBankName"
-                                type="text"
-                                v-model="createForm.bank_name"
-                                class="mt-1 block w-full"
-                            />
-                            <div v-if="createForm.errors.bank_name" class="text-red-600 text-sm mt-1">{{ createForm.errors.bank_name }}</div>
-                        </div>
+                        
                         <div>
                             <InputLabel for="createAccountNumber" value="Account Number" />
                             <TextInput
@@ -345,23 +486,37 @@ const clearFilters = () => {
                             />
                             <div v-if="createForm.errors.account_number" class="text-red-600 text-sm mt-1">{{ createForm.errors.account_number }}</div>
                         </div>
-                    </div>
+                        
+                        <div>
+                            <InputLabel for="createBankName" value="Bank Name (Optional)" />
+                            <TextInput
+                                id="createBankName"
+                                type="text"
+                                v-model="createForm.bank_name"
+                                class="mt-1 block w-full"
+                            />
+                            <div v-if="createForm.errors.bank_name" class="text-red-600 text-sm mt-1">{{ createForm.errors.bank_name }}</div>
+                        </div>
 
-                    <div>
-                        <InputLabel for="createBalance" value="Initial Balance (Optional)" />
-                        <TextInput
-                            id="createBalance"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            v-model="createForm.balance"
-                            class="mt-1 block w-full"
-                        />
-                        <div v-if="createForm.errors.balance" class="text-red-600 text-sm mt-1">{{ createForm.errors.balance }}</div>
+                        <div>
+                            <InputLabel for="createBalance" value="Initial Balance (Optional)" />
+                            <TextInput
+                                id="createBalance"
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                v-model="createForm.balance"
+                                class="mt-1 block w-full"
+                            />
+                            <div v-if="createForm.errors.balance" class="text-red-600 text-sm mt-1">{{ createForm.errors.balance }}</div>
+                        </div>
                     </div>
                     
-                    <div class="flex justify-end">
-                        <PrimaryButton type="submit" :disabled="createForm.processing">Create Account</PrimaryButton>
+                    <div class="flex flex-col sm:flex-row gap-2 pt-4">
+                        <SecondaryButton @click="showCreateModal = false" class="order-2 sm:order-1">Cancel</SecondaryButton>
+                        <PrimaryButton type="submit" :disabled="createForm.processing" class="order-1 sm:order-2">
+                            {{ createForm.processing ? 'Creating...' : 'Create Account' }}
+                        </PrimaryButton>
                     </div>
                 </form>
             </div>
@@ -369,10 +524,10 @@ const clearFilters = () => {
 
         <!-- Edit Account Modal -->
         <Modal :show="showEditModal" @close="showEditModal = false">
-            <div class="p-6">
+            <div class="p-4 sm:p-6 max-h-screen overflow-y-auto">
                 <h2 class="text-lg font-medium mb-4">Edit Cooperative Account</h2>
                 <form @submit.prevent="submitEdit" class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 gap-4">
                         <div>
                             <InputLabel for="editAccountName" value="Account Name" />
                             <TextInput
@@ -384,6 +539,7 @@ const clearFilters = () => {
                             />
                             <div v-if="editForm.errors.account_name" class="text-red-600 text-sm mt-1">{{ editForm.errors.account_name }}</div>
                         </div>
+                        
                         <div>
                             <InputLabel for="editAccountType" value="Account Type" />
                             <select
@@ -399,19 +555,7 @@ const clearFilters = () => {
                             </select>
                             <div v-if="editForm.errors.account_type" class="text-red-600 text-sm mt-1">{{ editForm.errors.account_type }}</div>
                         </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <InputLabel for="editBankName" value="Bank Name (Optional)" />
-                            <TextInput
-                                id="editBankName"
-                                type="text"
-                                v-model="editForm.bank_name"
-                                class="mt-1 block w-full"
-                            />
-                            <div v-if="editForm.errors.bank_name" class="text-red-600 text-sm mt-1">{{ editForm.errors.bank_name }}</div>
-                        </div>
+                        
                         <div>
                             <InputLabel for="editAccountNumber" value="Account Number" />
                             <TextInput
@@ -423,19 +567,30 @@ const clearFilters = () => {
                             />
                             <div v-if="editForm.errors.account_number" class="text-red-600 text-sm mt-1">{{ editForm.errors.account_number }}</div>
                         </div>
-                    </div>
+                        
+                        <div>
+                            <InputLabel for="editBankName" value="Bank Name (Optional)" />
+                            <TextInput
+                                id="editBankName"
+                                type="text"
+                                v-model="editForm.bank_name"
+                                class="mt-1 block w-full"
+                            />
+                            <div v-if="editForm.errors.bank_name" class="text-red-600 text-sm mt-1">{{ editForm.errors.bank_name }}</div>
+                        </div>
 
-                    <div>
-                        <InputLabel for="editBalance" value="Balance" />
-                        <TextInput
-                            id="editBalance"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            v-model="editForm.balance"
-                            class="mt-1 block w-full"
-                        />
-                        <div v-if="editForm.errors.balance" class="text-red-600 text-sm mt-1">{{ editForm.errors.balance }}</div>
+                        <div>
+                            <InputLabel for="editBalance" value="Balance" />
+                            <TextInput
+                                id="editBalance"
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                v-model="editForm.balance"
+                                class="mt-1 block w-full"
+                            />
+                            <div v-if="editForm.errors.balance" class="text-red-600 text-sm mt-1">{{ editForm.errors.balance }}</div>
+                        </div>
                     </div>
                     
                     <div class="flex justify-end">

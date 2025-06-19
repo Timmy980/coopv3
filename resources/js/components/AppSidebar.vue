@@ -21,34 +21,39 @@ const mainNavItems: NavItem[] = [
 
     ...(user?.roles.includes('admin') ? [{
         title: 'Roles',
-        href: route('roles.index'),
+        href: route('admin.users.roles.index'),
         icon: Shield,
     },
     {
         title: 'Members Management',
-        href: route('user-approvals.index'),
+        href: route('admin.users.approvals.index'),
         icon: Users,
     },
     {
         title: 'Cooperative Accounts',
-        href: route('cooperative_accounts.index'),
+        href: route('admin.accounts.cooperative.index'),
         icon: Landmark,
     },
     {
         title: 'Account Types',
-        href: route('account-types.index'),
+        href: route('admin.accounts.types.index'),
         icon: Folder,
     },
     {
         title: 'Member Accounts',
-        href: route('member_accounts.index'),
+        href: route('admin.accounts.members.index'),
         icon: Folder
     },
     {
         title: 'Withdrawal Requests',
-        href: route('withdrawals.index'),
+        href: route('admin.withdrawals.index'),
         icon: Download,
-    }
+    },
+    {
+    title: 'Savings Management',
+    href: route('admin.savings.index'),
+    icon: PiggyBank
+    },
 
 ] : []),
 ...(user?.roles.includes('member') ? [{
@@ -58,15 +63,16 @@ const mainNavItems: NavItem[] = [
 },
 {
         title: 'Withdrawal Requests',
-        href: route('member.withdrawal-requests.index'),
+        href: route('member.withdrawals.index'),
         icon: Download,
     },
+    {
+        title: 'Savings',
+        href: route('member.savings.index'),
+        icon: PiggyBank
+    },
 ] : []),
-{
-    title: 'Savings Management',
-    href: route('savings.index'),
-    icon: PiggyBank
-},
+
 ];
 
 const footerNavItems: NavItem[] = [

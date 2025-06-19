@@ -40,8 +40,8 @@ const accountTypeFilter = ref(props.filters?.account_type ?? '');
 // Debounced search function
 const performSearch = () => {
     router.get(
-        route('member_accounts.index'),
-        { 
+        route('admin.accounts.members.index'),
+        {
             search: search.value,
             status: statusFilter.value,
             account_type: accountTypeFilter.value
@@ -76,7 +76,7 @@ const showCreateModal = ref(false);
 const showEditModal = ref(false);
 
 const submitCreate = () => {
-    createForm.post(route('member_accounts.store'), {
+    createForm.post(route('admin.accounts.members.store'), {
         onSuccess: () => {
             showCreateModal.value = false;
             createForm.reset();
@@ -92,7 +92,7 @@ const openEdit = (account) => {
 };
 
 const submitEdit = () => {
-    editForm.put(route('member_accounts.update', editForm.id), {
+    editForm.put(route('admin.accounts.members.update', editForm.id), {
         onSuccess: () => {
             showEditModal.value = false;
             editForm.reset();
@@ -103,7 +103,7 @@ const submitEdit = () => {
 const deleteAccount = (account) => {
     const memberName = `${account.user.first_name} ${account.user.last_name}`;
     if (confirm(`Are you sure you want to delete ${memberName}'s ${account.account_type.name} account? This action cannot be undone.`)) {
-        router.delete(route('member_accounts.destroy', account.id));
+        router.delete(route('admin.accounts.members.destroy', account.id));
     }
 };
 
@@ -111,7 +111,7 @@ const toggleStatus = (account) => {
     const action = account.status === 'active' ? 'deactivate' : 'activate';
     const memberName = `${account.user.first_name} ${account.user.last_name}`;
     if (confirm(`Are you sure you want to ${action} ${memberName}'s ${account.account_type.name} account?`)) {
-        router.patch(route('member_accounts.toggle_status', account.id));
+        router.patch(route('admin.accounts.members.toggle-status', account.id));
     }
 };
 
@@ -164,20 +164,19 @@ const getUserOptions = computed(() => {
             </h2>
         </template>
 
-        <div class="py-12">
+        <div class="py-6 sm:py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4 sm:p-6">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
                         <h3 class="text-lg font-semibold">Member Accounts</h3>
-                        <div class="flex flex-col sm:flex-row gap-2">
-                            <PrimaryButton @click="showCreateModal = true">Create Account</PrimaryButton>
+                        <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                            <PrimaryButton @click="showCreateModal = true" class="w-full justify-center">Create Account</PrimaryButton>
                         </div>
                     </div>
 
-                    <!-- Filters -->
-                    <div class="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div>
-                            <InputLabel for="search" value="Search" />
+                            <InputLabel for="search" value="Search" class="sr-only sm:not-sr-only" />
                             <TextInput
                                 id="search"
                                 type="text"
@@ -188,7 +187,7 @@ const getUserOptions = computed(() => {
                             />
                         </div>
                         <div>
-                            <InputLabel for="status" value="Status" />
+                            <InputLabel for="status" value="Status" class="sr-only sm:not-sr-only" />
                             <select
                                 id="status"
                                 v-model="statusFilter"
@@ -201,7 +200,7 @@ const getUserOptions = computed(() => {
                             </select>
                         </div>
                         <div>
-                            <InputLabel for="account_type" value="Account Type" />
+                            <InputLabel for="account_type" value="Account Type" class="sr-only sm:not-sr-only" />
                             <select
                                 id="account_type"
                                 v-model="accountTypeFilter"
@@ -214,21 +213,20 @@ const getUserOptions = computed(() => {
                             </select>
                         </div>
                         <div class="flex items-end">
-                            <SecondaryButton @click="clearFilters" class="w-full">Clear Filters</SecondaryButton>
+                            <SecondaryButton @click="clearFilters" class="w-full justify-center">Clear Filters</SecondaryButton>
                         </div>
                     </div>
 
-                    <!-- Accounts List -->
                     <div class="bg-gray-50 p-4 rounded-lg">
                         <div class="space-y-4">
                             <div v-for="account in accounts.data" :key="account.id" class="bg-white p-4 rounded shadow-sm">
                                 <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                                    <div class="flex-grow">
+                                    <div class="flex-grow w-full">
                                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
                                             <h4 class="font-semibold text-lg text-gray-800">
                                                 {{ getUserFullName(account.user) }}
                                             </h4>
-                                            <div class="flex items-center gap-4 mt-2 sm:mt-0">
+                                            <div class="flex flex-wrap items-center gap-2 mt-2 sm:mt-0">
                                                 <span class="text-sm px-2 py-1 rounded" :class="getStatusClass(account.status)">
                                                     {{ statuses[account.status] }}
                                                 </span>
@@ -237,44 +235,43 @@ const getUserOptions = computed(() => {
                                                 </span>
                                             </div>
                                         </div>
-                                        
-                                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-gray-600">
-                                            <div class="lg:col-span-1">
-                                                <div>
-                                                    <span class="font-medium">Account Number:</span>
-                                                    <span class="ml-1">{{ account.account_number }}</span>
-                                                </div>
-                                                <div class="mt-2">
-                                                    <span class="font-medium">Email:</span>
-                                                    <span class="ml-1">{{ account.user.email }}</span>
-                                                </div>
+
+                                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-2 gap-x-4 text-sm text-gray-600">
+                                            <div>
+                                                <span class="font-medium">Account Number:</span>
+                                                <span class="ml-1 break-all">{{ account.account_number }}</span>
+                                            </div>
+                                            <div>
+                                                <span class="font-medium">Email:</span>
+                                                <span class="ml-1 break-all">{{ account.user.email }}</span>
                                             </div>
                                             <div>
                                                 <span class="font-medium">Balance:</span>
                                                 <span class="ml-1 font-semibold text-green-600">{{ formatCurrency(account.balance) }}</span>
                                             </div>
-                                            <div class="flex flex-wrap gap-2 text-xs">
+                                            <div class="md:col-span-2 lg:col-span-1 flex flex-wrap gap-2 text-xs mt-2 md:mt-0">
                                                 <span class="bg-gray-100 px-2 py-1 rounded">{{ account.savings_count }} Savings</span>
                                                 <span class="bg-gray-100 px-2 py-1 rounded">{{ account.withdrawal_requests_count }} Withdrawals</span>
                                             </div>
                                         </div>
                                     </div>
-                                    
-                                    <div class="flex flex-col sm:flex-row gap-2">
-                                        <Link :href="route('member_accounts.show', account.id)">
-                                            <SecondaryButton>View</SecondaryButton>
+
+                                    <div class="flex flex-wrap justify-end gap-2 w-full lg:w-auto mt-4 lg:mt-0">
+                                        <Link :href="route('admin.accounts.members.show', account.id)" class="w-full sm:w-auto">
+                                            <SecondaryButton class="w-full justify-center">View</SecondaryButton>
                                         </Link>
-                                        <PrimaryButton @click="openEdit(account)">Edit</PrimaryButton>
-                                        <SecondaryButton 
+                                        <PrimaryButton @click="openEdit(account)" class="w-full sm:w-auto justify-center">Edit</PrimaryButton>
+                                        <SecondaryButton
                                             @click="toggleStatus(account)"
-                                            :class="account.status === 'active' ? 'bg-yellow-500 hover:bg-yellow-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'"
+                                            :class="[account.status === 'active' ? 'bg-yellow-500 hover:bg-yellow-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white', 'w-full sm:w-auto justify-center']"
                                         >
                                             {{ account.status === 'active' ? 'Deactivate' : 'Activate' }}
                                         </SecondaryButton>
-                                        <DangerButton 
+                                        <DangerButton
                                             @click="deleteAccount(account)"
                                             :disabled="account.savings_count > 0 || account.withdrawal_requests_count > 0"
                                             :title="(account.savings_count > 0 || account.withdrawal_requests_count > 0) ? 'Cannot delete account with existing transactions' : ''"
+                                            class="w-full sm:w-auto justify-center"
                                         >
                                             Delete
                                         </DangerButton>
@@ -282,24 +279,23 @@ const getUserOptions = computed(() => {
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Pagination -->
+
                         <div class="mt-6" v-if="accounts.data.length > 0">
-                            <div class="flex items-center justify-between">
+                            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
                                 <div class="text-sm text-gray-600">
                                     Showing {{ accounts.from }} - {{ accounts.to }} of {{ accounts.total }} accounts
                                 </div>
-                                <div class="flex gap-1">
+                                <div class="flex flex-wrap justify-center gap-1">
                                     <Link
                                         v-for="(link, i) in accounts.links"
                                         :key="i"
                                         :href="link.url"
                                         v-html="link.label"
                                         class="px-3 py-1 rounded text-sm"
-                                        :class="{ 
+                                        :class="{
                                             'bg-blue-500 text-white': link.active,
                                             'text-gray-600 hover:bg-gray-100': !link.active && link.url,
-                                            'text-gray-400': !link.url 
+                                            'text-gray-400 cursor-not-allowed': !link.url
                                         }"
                                     />
                                 </div>
@@ -316,7 +312,6 @@ const getUserOptions = computed(() => {
             </div>
         </div>
 
-        <!-- Create Account Modal -->
         <Modal :show="showCreateModal" @close="showCreateModal = false">
             <div class="p-6">
                 <h2 class="text-lg font-medium mb-4">Create New Member Account</h2>
@@ -366,7 +361,7 @@ const getUserOptions = computed(() => {
                         />
                         <div v-if="createForm.errors.balance" class="text-red-600 text-sm mt-1">{{ createForm.errors.balance }}</div>
                     </div>
-                    
+
                     <div class="flex justify-end">
                         <PrimaryButton type="submit" :disabled="createForm.processing">Create Account</PrimaryButton>
                     </div>
@@ -374,7 +369,6 @@ const getUserOptions = computed(() => {
             </div>
         </Modal>
 
-        <!-- Edit Account Modal -->
         <Modal :show="showEditModal" @close="showEditModal = false">
             <div class="p-6">
                 <h2 class="text-lg font-medium mb-4">Edit Member Account</h2>
@@ -407,7 +401,7 @@ const getUserOptions = computed(() => {
                         </select>
                         <div v-if="editForm.errors.status" class="text-red-600 text-sm mt-1">{{ editForm.errors.status }}</div>
                     </div>
-                    
+
                     <div class="flex justify-end">
                         <PrimaryButton type="submit" :disabled="editForm.processing">Update Account</PrimaryButton>
                     </div>

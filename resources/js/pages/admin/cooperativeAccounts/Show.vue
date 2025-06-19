@@ -65,7 +65,7 @@ const getAccountTypeLabel = (type) => {
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                     Cooperative Account Details
                 </h2>
-                <Link :href="route('cooperative_accounts.index')">
+                <Link :href="route('admin.accounts.cooperative.index')">
                     <SecondaryButton>Back to Accounts</SecondaryButton>
                 </Link>
             </div>
@@ -85,7 +85,7 @@ const getAccountTypeLabel = (type) => {
                                 <span class="px-3 py-1 rounded-full text-sm font-medium" :class="getStatusClass(account.status)">
                                     {{ account.status.charAt(0).toUpperCase() + account.status.slice(1) }}
                                 </span>
-                                <Link :href="route('cooperative_accounts.edit', account.id)">
+                                <Link :href="route('admin.accounts.cooperative.edit', account.id)">
                                     <PrimaryButton>Edit Account</PrimaryButton>
                                 </Link>
                             </div>

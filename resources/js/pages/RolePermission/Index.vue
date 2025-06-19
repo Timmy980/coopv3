@@ -2,38 +2,74 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { ref, computed, watch } from 'vue';
 import { Head, useForm, router, Link } from '@inertiajs/vue3';
-import lodash from 'lodash';
 import InputLabel from '@/components/InputLabel.vue';
 import TextInput from '@/components/TextInput.vue';
 import PrimaryButton from '@/components/PrimaryButton.vue';
 import DangerButton from '@/components/DangerButton.vue';
 import Modal from '@/components/Modal.vue';
+import type { BreadcrumbItem } from '@/types';
 
-const props = defineProps({
-    roles: {
-        type: Array,
-        required: true
-    },
-    permissions: {
-        type: Array,
-        required: true
-    },
-    users: {
-        type: Object,
-        required: true
-    },
+// Simple debounce function
+function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
+    let timeout: NodeJS.Timeout;
+    return ((...args: any[]) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(null, args), wait);
+    }) as T;
+}
+
+interface Role {
+    id: number;
+    name: string;
+    permissions: Permission[];
+}
+
+interface Permission {
+    id: number;
+    name: string;
+}
+
+interface User {
+    id: number;
+    first_name: string;
+    last_name: string;
+    roles: Role[];
+}
+
+interface UserPaginated {
+    data: User[];
+    from: number;
+    to: number;
+    total: number;
+    links: Array<{
+        url: string | null;
+        label: string;
+        active: boolean;
+    }>;
+}
+
+const props = defineProps<{
+    roles: Role[];
+    permissions: Permission[];
+    users: UserPaginated;
     filters: {
-        type: Object,
-        default: () => ({})
-    }
-});
+        search?: string;
+    };
+}>();
+
+const breadcrumbs: BreadcrumbItem[] = [
+    {
+        title: 'Role & Permission Management',
+        href: route('admin.users.roles.index'),
+    },
+];
 
 const search = ref(props.filters?.search ?? '');
 
 // Debounced search function
 const performSearch = () => {
     router.get(
-        route('roles.index'),
+        route('admin.users.roles.index'),
         { search: search.value },
         {
             preserveState: true,
@@ -43,7 +79,7 @@ const performSearch = () => {
     );
 };
 
-const debouncedSearch = lodash.debounce(performSearch, 300);
+const debouncedSearch = debounce(performSearch, 300);
 
 watch(search, () => {
     debouncedSearch();
@@ -51,7 +87,7 @@ watch(search, () => {
 
 const createRoleForm = useForm({
     name: '',
-    permissions: []
+    permissions: [] as string[]
 });
 
 const createPermissionForm = useForm({
@@ -59,14 +95,14 @@ const createPermissionForm = useForm({
 });
 
 const assignRoleForm = useForm({
-    user_id: '',
+    user_id: '' as string,
     role: ''
 });
 
 const editRoleForm = useForm({
-    role_id: '',
+    role_id: '' as string,
     name: '',
-    permissions: []
+    permissions: [] as string[]
 });
 
 const showRoleModal = ref(false);
@@ -74,10 +110,9 @@ const showPermissionModal = ref(false);
 const showAssignRoleModal = ref(false);
 const showEditRoleModal = ref(false);
 const showQuickAssignModal = ref(false);
-const selectedUser = ref(null);
+const selectedUser = ref<User | null>(null);
 
 const quickAssignForm = useForm({
-    user_id: '',
     role: ''
 });
 
@@ -85,12 +120,12 @@ const quickAssignForm = useForm({
 const availableRoles = computed(() => {
     if (!selectedUser.value) return props.roles;
     return props.roles.filter(role => 
-        !selectedUser.value.roles.some(userRole => userRole.name === role.name)
+        !selectedUser.value!.roles.some(userRole => userRole.name === role.name)
     );
 });
 
 const submitRole = () => {
-    createRoleForm.post(route('roles.create'), {
+    createRoleForm.post(route('admin.users.roles.store'), {
         onSuccess: () => {
             showRoleModal.value = false;
             createRoleForm.reset();
@@ -99,7 +134,7 @@ const submitRole = () => {
 };
 
 const submitPermission = () => {
-    createPermissionForm.post(route('permissions.create'), {
+    createPermissionForm.post(route('admin.users.permissions.store'), {
         onSuccess: () => {
             showPermissionModal.value = false;
             createPermissionForm.reset();
@@ -108,7 +143,7 @@ const submitPermission = () => {
 };
 
 const assignRole = () => {
-    assignRoleForm.post(route('roles.assign'), {
+    assignRoleForm.patch(route('admin.users.roles.assign', assignRoleForm.user_id.toString()), {
         onSuccess: () => {
             showAssignRoleModal.value = false;
             assignRoleForm.reset();
@@ -116,27 +151,27 @@ const assignRole = () => {
     });
 };
 
-const deleteRole = (roleId) => {
+const deleteRole = (roleId: number) => {
     if (confirm('Are you sure you want to delete this role?')) {
-        router.delete(route('roles.delete', roleId));
+        router.delete(route('admin.users.roles.destroy', roleId));
     }
 };
 
-const deletePermission = (permissionId) => {
+const deletePermission = (permissionId: number) => {
     if (confirm('Are you sure you want to delete this permission?')) {
-        router.delete(route('permissions.delete', permissionId));
+        router.delete(route('admin.users.permissions.destroy', permissionId));
     }
 };
 
-const openEditRole = (role) => {
-    editRoleForm.role_id = role.id;
+const openEditRole = (role: Role) => {
+    editRoleForm.role_id = role.id.toString();
     editRoleForm.name = role.name;
     editRoleForm.permissions = role.permissions.map(p => p.name);
     showEditRoleModal.value = true;
 };
 
 const updateRole = () => {
-    editRoleForm.put(route('roles.update', editRoleForm.role_id), {
+    editRoleForm.put(route('admin.users.roles.update', editRoleForm.role_id), {
         onSuccess: () => {
             showEditRoleModal.value = false;
             editRoleForm.reset();
@@ -144,24 +179,24 @@ const updateRole = () => {
     });
 };
 
-const unassignRole = (userId, roleName) => {
+const unassignRole = (userId: number, roleName: string) => {
     if (confirm(`Are you sure you want to remove the role "${roleName}" from this user?`)) {
-        router.post(route('roles.unassign'), {
-            user_id: userId,
+        router.patch(route('admin.users.roles.unassign', userId.toString()), {
             role: roleName
         });
     }
 };
 
-const openQuickAssign = (user) => {
+const openQuickAssign = (user: User) => {
     selectedUser.value = user;
-    quickAssignForm.user_id = user.id;
     quickAssignForm.role = '';
     showQuickAssignModal.value = true;
 };
 
 const quickAssignRole = () => {
-    quickAssignForm.post(route('roles.assign'), {
+    if (!selectedUser.value) return;
+    
+    quickAssignForm.patch(route('admin.users.roles.assign', selectedUser.value.id.toString()), {
         onSuccess: () => {
             showQuickAssignModal.value = false;
             quickAssignForm.reset();
@@ -174,7 +209,7 @@ const quickAssignRole = () => {
 <template>
     <Head title="Role &amp; Permission Management" />
 
-    <AppLayout>
+    <AppLayout :breadcrumbs="breadcrumbs">
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 Role &amp; Permission Management
@@ -279,7 +314,7 @@ const quickAssignRole = () => {
                                         <Link
                                             v-for="(link, i) in users.links"
                                             :key="i"
-                                            :href="link.url"
+                                            :href="link.url || '#'"
                                             v-html="link.label"
                                             class="px-3 py-1 rounded text-sm"
                                             :class="{ 

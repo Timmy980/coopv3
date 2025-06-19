@@ -75,7 +75,7 @@ class WithdrawalRequestController extends Controller
 
         $withdrawalRequest->save();
 
-        return redirect()->route('member.withdrawal-requests.index')
+        return redirect()->route('member.withdrawals.index')
             ->with('success', 'Withdrawal request submitted successfully.');
     }
 

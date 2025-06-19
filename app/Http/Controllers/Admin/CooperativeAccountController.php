@@ -33,7 +33,7 @@ class CooperativeAccountController extends Controller
             ->paginate(10)
             ->appends($request->query());
 
-        return Inertia::render('Admin/cooperativeAccounts/Index', [
+        return Inertia::render('Admin/CooperativeAccounts/Index', [
             'accounts' => $accounts,
             'filters' => [
                 'search' => $search,
@@ -60,7 +60,7 @@ class CooperativeAccountController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('CooperativeAccounts/Create', [
+        return Inertia::render('Admin/CooperativeAccounts/Create', [
             'accountTypes' => [
                 'savings' => 'Savings Account',
                 'current' => 'Current Account',
@@ -87,7 +87,7 @@ class CooperativeAccountController extends Controller
 
         CooperativeAccount::create($validated);
 
-        return Redirect::route('cooperative_accounts.index')
+        return Redirect::route('admin.accounts.cooperative.index')
                       ->with('success', 'Cooperative account created successfully.');
     }
 
@@ -109,7 +109,7 @@ class CooperativeAccountController extends Controller
                              $cooperativeAccount->disbursedWithdrawals->sum('requested_amount');
         $totalRepayments = $cooperativeAccount->receivedLoanRepayments->sum('amount');
 
-        return Inertia::render('Admin/cooperativeAccounts/Show', [
+        return Inertia::render('Admin/CooperativeAccounts/Show', [
             'account' => $cooperativeAccount,
             'summary' => [
                 'total_savings' => $totalSavings,
@@ -125,7 +125,7 @@ class CooperativeAccountController extends Controller
      */
     public function edit(CooperativeAccount $cooperativeAccount): Response
     {
-        return Inertia::render('CooperativeAccounts/Edit', [
+        return Inertia::render('Admin/CooperativeAccounts/Edit', [
             'account' => $cooperativeAccount,
             'accountTypes' => [
                 'savings' => 'Savings Account',
@@ -153,7 +153,7 @@ class CooperativeAccountController extends Controller
 
         $cooperativeAccount->update($validated);
 
-        return Redirect::route('cooperative_accounts.index')
+        return Redirect::route('admin.accounts.cooperative.index')
                       ->with('success', 'Cooperative account updated successfully.');
     }
 
@@ -176,7 +176,7 @@ class CooperativeAccountController extends Controller
 
         $cooperativeAccount->delete();
 
-        return Redirect::route('cooperative_accounts.index')
+        return Redirect::route('admin.accounts.cooperative.index')
                       ->with('success', 'Cooperative account deleted successfully.');
     }
 
@@ -194,7 +194,7 @@ class CooperativeAccountController extends Controller
 
         $cooperativeAccount->update(['status' => $newStatus]);
 
-        return Redirect::route('cooperative_accounts.index')
+        return Redirect::route('admin.accounts.cooperative.index')
                       ->with('success', "Account status changed to {$newStatus}.");
     }
 }

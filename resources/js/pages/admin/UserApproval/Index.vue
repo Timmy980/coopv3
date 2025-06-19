@@ -44,7 +44,7 @@ const approveUser = () => {
     
     processingApproval.value = true;
     
-    router.post(route('user-approvals.approve', selectedUser.value.id), {}, {
+    router.patch(route('admin.users.approvals.approve', selectedUser.value.id), {}, {
         onSuccess: () => {
             showApprovalModal.value = false;
             selectedUser.value = null;
@@ -61,7 +61,7 @@ const rejectUser = () => {
     
     processingRejection.value = true;
     
-    router.post(route('user-approvals.reject', selectedUser.value.id), {}, {
+    router.patch(route('admin.users.approvals.reject', selectedUser.value.id), {}, {
         onSuccess: () => {
             showRejectionModal.value = false;
             selectedUser.value = null;

@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
+use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
@@ -89,27 +90,23 @@ class RolePermissionController extends Controller
         return redirect()->back()->with('success', 'Permission deleted successfully.');
     }
 
-    public function assignRole(Request $request)
+    public function assignRole(Request $request, User $user)
     {
         $validated = $request->validate([
-            'user_id' => ['required', 'exists:users,id'],
             'role' => ['required', 'exists:roles,name']
         ]);
 
-        $user = User::findOrFail($validated['user_id']);
         $user->assignRole($validated['role']);
 
         return redirect()->back()->with('success', 'Role assigned successfully.');
     }
 
-    public function unassignRole(Request $request)
+    public function unassignRole(Request $request, User $user)
     {
         $validated = $request->validate([
-            'user_id' => ['required', 'exists:users,id'],
             'role' => ['required', 'exists:roles,name']
         ]);
 
-        $user = User::findOrFail($validated['user_id']);
         $user->removeRole($validated['role']);
 
         return redirect()->back()->with('success', 'Role unassigned successfully.');

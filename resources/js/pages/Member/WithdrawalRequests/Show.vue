@@ -6,7 +6,7 @@
                     Withdrawal Request Details
                 </h2>
                 <Link
-                    :href="route('member.withdrawal-requests.index')"
+                    :href="route('member.withdrawals.index')"
                     class="text-gray-600 hover:text-gray-900"
                 >
                     Back to Requests

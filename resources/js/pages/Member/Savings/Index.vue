@@ -38,7 +38,7 @@ const hasActiveFilters = computed(() => {
 // Debounced filter function
 const performFilter = () => {
     router.get(
-        route('savings.index'),
+        route('member.savings.index'),
         {
             status: statusFilter.value,
             source: sourceFilter.value,
@@ -195,6 +195,7 @@ watch([statusFilter, sourceFilter, dateFromFilter, dateToFilter], () => {
                     :show-upload-proof-button="true"
                     member-column-label="Account"
                     :has-active-filters="Boolean(hasActiveFilters)"
+                    :is-admin="false"
                     @upload-proof="showUploadProofModal"
                 />
             </div>

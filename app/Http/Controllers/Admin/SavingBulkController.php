@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
+use App\Http\Controllers\Controller;
 
 use App\Models\Saving;
 use App\Models\SavingBulkBatch;
@@ -60,7 +61,7 @@ class SavingBulkController extends Controller
                 $request->account_type_id
             ), $request->file('file'));
 
-            return redirect()->route('savings.bulk.show', $batch->id);
+            return redirect()->route('admin.savings.bulk.show', $batch->id);
         } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
             // Delete the batch since import failed
             if (isset($batch)) {

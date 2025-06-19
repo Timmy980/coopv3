@@ -46,7 +46,10 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div class="flex gap-2">
-                  <Link :href="route('savings.show', saving.id)" class="text-indigo-600 hover:text-indigo-900">
+                  <Link v-if="isAdmin" :href="route('admin.savings.show', saving.id)" class="text-indigo-600 hover:text-indigo-900">
+                    View
+                  </Link>
+                  <Link v-else :href="route('member.savings.show', saving.id)" class="text-indigo-600 hover:text-indigo-900">
                     View
                   </Link>
                   <button
@@ -89,13 +92,15 @@
     showUploadProofButton?: boolean;
     memberColumnLabel?: string;
     hasActiveFilters?: boolean;
+    isAdmin: boolean;
   }
   
   withDefaults(defineProps<Props>(), {
     showMemberDetails: false,
     showUploadProofButton: false,
     memberColumnLabel: 'Account',
-    hasActiveFilters: false
+    hasActiveFilters: false,
+    isAdmin: false
   });
   
   defineEmits<{

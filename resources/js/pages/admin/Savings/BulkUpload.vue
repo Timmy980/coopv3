@@ -18,11 +18,11 @@ const props = defineProps<Props>();
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Savings',
-        href: route('savings.index'),
+        href: route('admin.savings.index'),
     },
     {
         title: 'Bulk Upload',
-        href: route('savings.bulk.form'),
+        href: route('admin.savings.bulk.create'),
     },
 ];
 
@@ -50,7 +50,7 @@ const hasSelectedFile = computed(() => !!form.file);
 const downloadTemplate = () => {
     if (!templateForm.account_type_id) return;
     
-    window.location.href = route('savings.bulk.template', {
+    window.location.href = route('admin.savings.bulk.template', {
         account_type_id: templateForm.account_type_id
     });
 };
@@ -112,14 +112,14 @@ const handleDragLeave = () => {
 
 // Form submission
 const submit = () => {
-    form.post(route('savings.bulk.upload'), {
+    form.post(route('admin.savings.bulk.upload'), {
         preserveScroll: true
     });
 };
 
 // Navigation
 const goBack = () => {
-    router.visit(route('savings.index'));
+    router.visit(route('admin.savings.index'));
 };
 </script>
 

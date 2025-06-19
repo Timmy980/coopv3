@@ -36,7 +36,7 @@ const rejectForm = useForm({
 // Filter functions
 const performFilter = () => {
     router.get(
-        route('withdrawals.index'),
+        route('admin.withdrawals.index'),
         {
             status: statusFilter.value,
             start_date: startDateFilter.value,
@@ -59,7 +59,7 @@ watch([statusFilter, startDateFilter, endDateFilter, searchFilter], () => {
 // Action functions
 const approve = (request: WithdrawalRequest) => {
     if (confirm('Are you sure you want to approve this withdrawal request?')) {
-        router.patch(route('withdrawals.approve', request.id), {}, {
+        router.patch(route('admin.withdrawals.approvals.approve', request.id), {}, {
             preserveScroll: true
         });
     }
@@ -78,7 +78,7 @@ const closeRejectModal = () => {
 
 const submitReject = () => {
     if (selectedRequest.value) {
-        rejectForm.patch(route('withdrawals.reject', selectedRequest.value.id), {
+        rejectForm.patch(route('admin.withdrawals.approvals.reject', selectedRequest.value.id), {
             onSuccess: () => closeRejectModal()
         });
     }
@@ -231,7 +231,7 @@ const clearFilters = () => {
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
                                             <Link 
-                                                :href="route('withdrawals.show', request.id)"
+                                                :href="route('admin.withdrawals.show', request.id)"
                                                 class="text-indigo-600 hover:text-indigo-900"
                                             >
                                                 View

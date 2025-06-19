@@ -27,7 +27,7 @@ const props = defineProps<Props>();
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Savings',
-        href: route('savings.index'),
+        href: route('admin.savings.index'),
     },
 ];
 
@@ -45,7 +45,7 @@ const hasActiveFilters = computed(() => {
 // Debounced filter function
 const performFilter = () => {
     router.get(
-        route('savings.index'),
+        route('admin.savings.index'),
         {
             status: statusFilter.value,
             source: sourceFilter.value,
@@ -82,7 +82,7 @@ const closeSingleEntryModal = () => {
 };
 
 const submitSingleEntry = () => {
-    singleEntryForm.post(route('savings.single.store'), {
+    singleEntryForm.post(route('admin.savings.single.store'), {
         onSuccess: () => closeSingleEntryModal()
     });
 };
@@ -123,14 +123,14 @@ watch([statusFilter, sourceFilter, dateFromFilter, dateToFilter], () => {
                                 New Single Entry
                             </PrimaryButton>
                             <Link 
-                                :href="route('savings.bulk.form')" 
+                                :href="route('admin.savings.bulk.create')" 
                                 class="inline-flex items-center justify-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150"
                             >
                                 Bulk Upload
                             </Link>
                         </div>
                         <Link 
-                            :href="route('savings.pending')" 
+                            :href="route('admin.savings.approvals.pending')" 
                             class="inline-flex items-center px-4 py-2 bg-yellow-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-yellow-500 focus:bg-yellow-500 active:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition ease-in-out duration-150"
                         >
                             Pending Approval
@@ -160,6 +160,7 @@ watch([statusFilter, sourceFilter, dateFromFilter, dateToFilter], () => {
                     :show-member-details="true"
                     member-column-label="Member"
                     :has-active-filters="Boolean(hasActiveFilters)"
+                    :is-admin="true"
                 />
             </div>
         </div>

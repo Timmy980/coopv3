@@ -43,7 +43,7 @@ class MemberAccountTypeController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:account_types,name',
+            'name' => 'required|string|max:255',
             'description' => 'required|string',
             'interest_rate' => 'required|numeric|min:0|max:100',
             'withdrawal_rules' => 'required|array',
@@ -56,7 +56,7 @@ class MemberAccountTypeController extends Controller
 
         AccountType::create($validated);
 
-        return redirect()->route('account_types.index')
+        return redirect()->route('admin.accounts.types.index')
             ->with('success', 'Account type created successfully.');
     }
 
@@ -84,7 +84,7 @@ class MemberAccountTypeController extends Controller
 
         $accountType->update($validated);
 
-        return redirect()->route('account_types.index')
+        return redirect()->route('admin.accounts.types.index')
             ->with('success', 'Account type updated successfully.');
     }
 
@@ -95,13 +95,13 @@ class MemberAccountTypeController extends Controller
     {
         // Check if there are any member accounts using this account type
         if ($accountType->memberAccounts()->count() > 0) {
-            return redirect()->route('account_types.index')
+            return redirect()->route('admin.accounts.types.index')
                 ->with('error', 'Cannot delete account type that has active member accounts.');
         }
 
         $accountType->delete();
 
-        return redirect()->route('account_types.index')
+        return redirect()->route('admin.accounts.types.index')
             ->with('success', 'Account type deleted successfully.');
     }
 }

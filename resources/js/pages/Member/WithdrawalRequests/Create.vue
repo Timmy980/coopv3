@@ -52,7 +52,7 @@ const formatCurrency = (amount: number): string => {
 };
 
 const submit = (): void => {
-    form.post(route('member.withdrawal-requests.store'));
+    form.post(route('member.withdrawals.store'));
 };
 </script>
 
@@ -130,7 +130,7 @@ const submit = (): void => {
                             <!-- Submit Button -->
                             <div class="flex items-center justify-end">
                                 <Link
-                                    :href="route('member.withdrawal-requests.index')"
+                                    :href="route('member.withdrawals.index')"
                                     class="mr-4 text-gray-600 hover:text-gray-900"
                                 >
                                     Cancel

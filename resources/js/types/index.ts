@@ -46,6 +46,9 @@ export interface Saving {
     status: 'pending' | 'approved' | 'rejected' | 'failed';
     payment_proof?: string;
     notes?: string;
+    initiated_by?: User;
+    approved_by?: User;
+    rejected_by?: User;
 }
 
 export interface PaginationLink {

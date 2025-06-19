@@ -65,6 +65,7 @@ class RegisteredUserController extends Controller
 
         // Assign the member role to the newly registered user
         $user->assignRole('member');
+        
 
         event(new Registered($user));
 

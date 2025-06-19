@@ -18,11 +18,12 @@ class SavingController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Saving::query()
-            ->with(['memberAccount', 'cooperativeAccount'])
-            ->whereHas('memberAccount', function ($query) {
-                $query->where('user_id', Auth::id());
-            });
+        $query = Saving::with(['memberAccount', 'cooperativeAccount']);
+
+        // Only show member's savings
+        $query->whereHas('memberAccount', function ($q) use ($request) {
+            $q->where('user_id', $request->user()->id);
+        });
 
         // Apply filters
         if ($request->filled('status')) {
@@ -40,14 +41,29 @@ class SavingController extends Controller
         if ($request->filled('date_to')) {
             $query->whereDate('transaction_date', '<=', $request->date_to);
         }
-
-        $savings = $query->latest('transaction_date')->paginate(10);
+        $savings = $query->latest('transaction_date')->paginate(15);
 
         return Inertia::render('Member/Savings/Index', [
             'savings' => $savings,
             'filters' => $request->only(['status', 'source', 'date_from', 'date_to']),
-            'memberAccounts' => MemberAccount::where('user_id', Auth::id())->get(),
-            'cooperativeAccounts' => CooperativeAccount::where('status', 'active')->get(),
+            'memberAccounts' => MemberAccount::where('user_id', Auth::id())->with('accountType')->get(),
+            'cooperativeAccounts' => CooperativeAccount::active()->get(),
+        ]);
+    }
+
+    /**
+     * Display a specific saving
+     */
+    public function show(Saving $saving)
+    {
+        if ($saving->memberAccount->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $saving->load(['memberAccount', 'cooperativeAccount', 'initiatedBy', 'approvedBy', 'rejectedBy']);
+
+        return Inertia::render('Member/Savings/Show', [
+            'saving' => $saving
         ]);
     }
 
@@ -88,7 +104,7 @@ class SavingController extends Controller
             'initiated_by_id' => Auth::id(),
         ]);
 
-        return redirect()->route('savings.index')
+        return redirect()->route('member.savings.index')
             ->with('success', 'Bank deposit submitted successfully. Awaiting approval.');
     }
 
@@ -98,9 +114,11 @@ class SavingController extends Controller
     public function updateProof(Request $request, Saving $saving)
     {
         // Ensure saving belongs to authenticated user and is a pending bank deposit
-        if ($saving->memberAccount->user_id !== Auth::id() ||
+        if (
+            $saving->memberAccount->user_id !== Auth::id() ||
             $saving->source !== Saving::SOURCE_MEMBER_DEPOSIT ||
-            $saving->status !== Saving::STATUS_PENDING) {
+            $saving->status !== Saving::STATUS_PENDING
+        ) {
             abort(403);
         }
 
@@ -117,24 +135,7 @@ class SavingController extends Controller
         $proofPath = $request->file('payment_proof')->store('payment_proofs', 'public');
         $saving->update(['payment_proof_path' => $proofPath]);
 
-        return redirect()->route('savings.index')
+        return redirect()->route('member.savings.index')
             ->with('success', 'Payment proof updated successfully.');
     }
-
-    /**
-     * Show a specific saving.
-     */
-    public function show(Saving $saving)
-    {
-        // Ensure saving belongs to authenticated user
-        if ($saving->memberAccount->user_id !== Auth::id()) {
-            abort(403);
-        }
-
-        $saving->load(['memberAccount', 'cooperativeAccount', 'initiatedBy', 'approvedBy', 'rejectedBy']);
-
-        return Inertia::render('Member/Savings/Show', [
-            'saving' => $saving
-        ]);
-    }
-} 
+}

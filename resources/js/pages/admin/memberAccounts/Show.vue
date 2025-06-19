@@ -74,7 +74,7 @@ const getTransactionStatusClass = (status) => {
                         {{ getUserFullName(account.user) }} - {{ account.account_type.name }}
                     </p>
                 </div>
-                <Link :href="route('member_accounts.index')">
+                <Link :href="route('admin.accounts.members.index')">
                     <SecondaryButton>← Back to Accounts</SecondaryButton>
                 </Link>
             </div>

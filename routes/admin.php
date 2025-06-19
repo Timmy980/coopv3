@@ -1,107 +1,126 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-use App\Http\Controllers\RolePermissionController;
-use App\Http\Controllers\UserApprovalController;
-use App\Http\Middleware\AdminMiddleware;
+use App\Http\Controllers\Admin\RolePermissionController;
+use App\Http\Controllers\Admin\UserApprovalController;
 use App\Http\Controllers\Admin\MemberAccountTypeController;
 use App\Http\Controllers\Admin\CooperativeAccountController;
-use App\Http\Controllers\MemberAccountController;
-use App\Http\Controllers\SavingBulkController;
-use App\Http\Controllers\SavingController;
+use App\Http\Controllers\Admin\MemberAccountController;
+use App\Http\Controllers\Admin\SavingBulkController;
+use App\Http\Controllers\Admin\SavingController;
 use App\Http\Controllers\Admin\WithdrawalRequestController;
+use App\Http\Middleware\AdminMiddleware;
 
-
-// Role and Permission Management Routes
-Route::middleware(['auth', 'verified', AdminMiddleware::class])->group(function () {
-    // User Approval Routes
-    Route::get('/user-approvals', [UserApprovalController::class, 'index'])->name('user-approvals.index');
-    Route::post('/user-approvals/{user}/approve', [UserApprovalController::class, 'approve'])->name('user-approvals.approve');
-    Route::post('/user-approvals/{user}/reject', [UserApprovalController::class, 'reject'])->name('user-approvals.reject');
-
-    // Role and Permission Management Routes
-    Route::get('/roles', [RolePermissionController::class, 'index'])->name('roles.index');
-    Route::post('/roles', [RolePermissionController::class, 'createRole'])->name('roles.create');
-    Route::put('/roles/{role}', [RolePermissionController::class, 'updateRole'])->name('roles.update');
-    Route::delete('/roles/{role}', [RolePermissionController::class, 'deleteRole'])->name('roles.delete');
-    
-    Route::post('/permissions', [RolePermissionController::class, 'createPermission'])->name('permissions.create');
-    Route::delete('/permissions/{permission}', [RolePermissionController::class, 'deletePermission'])->name('permissions.delete');
-    
-    Route::post('/assign-role', [RolePermissionController::class, 'assignRole'])->name('roles.assign');
-    Route::post('/unassign-role', [RolePermissionController::class, 'unassignRole'])->name('roles.unassign');
-
-    // Account Type Management Routes
-    Route::get('/account-types', [MemberAccountTypeController::class, 'index'])->name('account-types.index');
-    Route::post('/account-types', [MemberAccountTypeController::class, 'store'])->name('account-types.store');
-    Route::put('/account-types/{accountType}', [MemberAccountTypeController::class, 'update'])->name('account-types.update');
-    Route::delete('/account-types/{accountType}', [MemberAccountTypeController::class, 'destroy'])->name('account-types.destroy');
-
-    // Cooperative Accounts Management
-    Route::resource('cooperative-accounts', CooperativeAccountController::class)->names([
-        'index' => 'cooperative_accounts.index',
-        'create' => 'cooperative_accounts.create',
-        'store' => 'cooperative_accounts.store',
-        'show' => 'cooperative_accounts.show',
-        'edit' => 'cooperative_accounts.edit',
-        'update' => 'cooperative_accounts.update',
-        'destroy' => 'cooperative_accounts.destroy',
-    ]);
-
-    // Additional route for toggling account status
-    Route::patch('cooperative-accounts/{cooperative_account}/toggle-status', [CooperativeAccountController::class, 'toggleStatus'])
-         ->name('cooperative_accounts.toggle_status');
-
-    // Member Accounts CRUD
-    Route::get('/member-accounts', [MemberAccountController::class, 'index'])->name('member_accounts.index');
-    Route::get('/member-accounts/{memberAccount}', [MemberAccountController::class, 'show'])->name('member_accounts.show');
-    Route::post('/member-accounts', [MemberAccountController::class, 'store'])->name('member_accounts.store');
-    Route::put('/member-accounts/{memberAccount}', [MemberAccountController::class, 'update'])->name('member_accounts.update');
-    Route::delete('/member-accounts/{memberAccount}', [MemberAccountController::class, 'destroy'])->name('member_accounts.destroy');
-    Route::patch('/member-accounts/{memberAccount}/toggle-status', [MemberAccountController::class, 'toggleStatus'])->name('member_accounts.toggle_status');
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', AdminMiddleware::class])->group(function () {
     
     /*
     |--------------------------------------------------------------------------
-    | Savings Routes
+    | User Management Routes
     |--------------------------------------------------------------------------
     */
-    // Savings Routes
-    Route::prefix('savings')->name('savings.')->group(function () {   
-
-        // Admin-specific routes
-        Route::middleware(['role:admin'])->group(function () {
-            // Single entry management
-            Route::post('/single-entry', [SavingController::class, 'storeSingleEntry'])->name('single.store');
-            
-            // Bulk upload
-            Route::get('/bulk-upload', [SavingBulkController::class, 'showUploadForm'])->name('bulk.form');
-            Route::post('/bulk-upload', [SavingBulkController::class, 'upload'])->name('bulk.upload');
-            Route::get('/bulk-batches', [SavingBulkController::class, 'index'])->name('bulk.index');
-            Route::get('/bulk-batches/{batch}', [SavingBulkController::class, 'show'])->name('bulk.show');
-            
-            // Download templates
-            Route::get('/bulk-template', [SavingBulkController::class, 'downloadTemplate'])->name('bulk.template');
-            
-            // Approval management
-            Route::put('/{saving}/approve', [SavingController::class, 'approve'])->name('approve');
-            Route::put('/{saving}/reject', [SavingController::class, 'reject'])->name('reject');
-            
-            // Admin reports and management
-            Route::get('/pending-approval', [SavingController::class, 'pendingApproval'])->name('pending');
-            Route::get('/reports', [SavingController::class, 'reports'])->name('reports');
+    Route::prefix('users')->name('users.')->group(function () {
+        // User Approvals
+        Route::prefix('approvals')->name('approvals.')->group(function () {
+            Route::get('/', [UserApprovalController::class, 'index'])->name('index');
+            Route::patch('{user}/approve', [UserApprovalController::class, 'approve'])->name('approve');
+            Route::patch('{user}/reject', [UserApprovalController::class, 'reject'])->name('reject');
+        });
+        
+        // Role and Permission Management
+        Route::prefix('roles')->name('roles.')->group(function () {
+            Route::get('/', [RolePermissionController::class, 'index'])->name('index');
+            Route::post('/', [RolePermissionController::class, 'createRole'])->name('store');
+            Route::put('{role}', [RolePermissionController::class, 'updateRole'])->name('update');
+            Route::delete('{role}', [RolePermissionController::class, 'deleteRole'])->name('destroy');
+            Route::patch('{user}/assign', [RolePermissionController::class, 'assignRole'])->name('assign');
+            Route::patch('{user}/unassign', [RolePermissionController::class, 'unassignRole'])->name('unassign');
+        });
+        
+        Route::prefix('permissions')->name('permissions.')->group(function () {
+            Route::post('/', [RolePermissionController::class, 'createPermission'])->name('store');
+            Route::delete('{permission}', [RolePermissionController::class, 'deletePermission'])->name('destroy');
         });
     });
 
     /*
     |--------------------------------------------------------------------------
-    | Withdrawal Requests Routes
+    | Account Management Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('accounts')->name('accounts.')->group(function () {
+        // Account Types
+        Route::prefix('types')->name('types.')->group(function () {
+            Route::get('/', [MemberAccountTypeController::class, 'index'])->name('index');
+            Route::post('/', [MemberAccountTypeController::class, 'store'])->name('store');
+            Route::put('{accountType}', [MemberAccountTypeController::class, 'update'])->name('update');
+            Route::delete('{accountType}', [MemberAccountTypeController::class, 'destroy'])->name('destroy');
+        });
+        
+        // Cooperative Accounts
+        Route::prefix('cooperative')->name('cooperative.')->group(function () {
+            Route::get('/', [CooperativeAccountController::class, 'index'])->name('index');
+            Route::get('create', [CooperativeAccountController::class, 'create'])->name('create');
+            Route::post('/', [CooperativeAccountController::class, 'store'])->name('store');
+            Route::get('{cooperativeAccount}', [CooperativeAccountController::class, 'show'])->name('show');
+            Route::get('{cooperativeAccount}/edit', [CooperativeAccountController::class, 'edit'])->name('edit');
+            Route::put('{cooperativeAccount}', [CooperativeAccountController::class, 'update'])->name('update');
+            Route::delete('{cooperativeAccount}', [CooperativeAccountController::class, 'destroy'])->name('destroy');
+            Route::patch('{cooperativeAccount}/toggle-status', [CooperativeAccountController::class, 'toggleStatus'])->name('toggle-status');
+        });
+        
+        // Member Accounts
+        Route::prefix('members')->name('members.')->group(function () {
+            Route::get('/', [MemberAccountController::class, 'index'])->name('index');
+            Route::post('/', [MemberAccountController::class, 'store'])->name('store');
+            Route::get('{memberAccount}', [MemberAccountController::class, 'show'])->name('show');
+            Route::put('{memberAccount}', [MemberAccountController::class, 'update'])->name('update');
+            Route::delete('{memberAccount}', [MemberAccountController::class, 'destroy'])->name('destroy');
+            Route::patch('{memberAccount}/toggle-status', [MemberAccountController::class, 'toggleStatus'])->name('toggle-status');
+        });
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Savings Management Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('savings')->name('savings.')->group(function () {
+        // Savings Management
+        Route::get('/', [SavingController::class, 'index'])->name('index');
+        Route::get('{saving}', [SavingController::class, 'show'])->name('show');
+
+        // Single Entry Management
+        Route::post('single', [SavingController::class, 'storeSingleEntry'])->name('single.store');
+        
+        // Bulk Operations
+        Route::prefix('bulk')->name('bulk.')->group(function () {
+            Route::get('/', [SavingBulkController::class, 'index'])->name('index');
+            Route::get('upload', [SavingBulkController::class, 'showUploadForm'])->name('create');
+            Route::post('upload', [SavingBulkController::class, 'upload'])->name('store');
+            Route::get('template', [SavingBulkController::class, 'downloadTemplate'])->name('template');
+            Route::get('{batch}', [SavingBulkController::class, 'show'])->name('show');
+        });
+        
+        // Approval Management
+        Route::prefix('approvals')->name('approvals.')->group(function () {
+            Route::get('pending', [SavingController::class, 'pendingApproval'])->name('pending');
+            Route::patch('{saving}/approve', [SavingController::class, 'approve'])->name('approve');
+            Route::patch('{saving}/reject', [SavingController::class, 'reject'])->name('reject');
+        });
+        
+        // Reports
+        Route::get('reports', [SavingController::class, 'reports'])->name('reports');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Withdrawal Management Routes
     |--------------------------------------------------------------------------
     */
     Route::prefix('withdrawals')->name('withdrawals.')->group(function () {
         Route::get('/', [WithdrawalRequestController::class, 'index'])->name('index');
-        Route::get('/{withdrawalRequest}', [WithdrawalRequestController::class, 'show'])->name('show');
-        Route::patch('/{withdrawalRequest}/approve', [WithdrawalRequestController::class, 'approve'])->name('approve');
-        Route::patch('/{withdrawalRequest}/reject', [WithdrawalRequestController::class, 'reject'])->name('reject');
+        Route::get('{withdrawalRequest}', [WithdrawalRequestController::class, 'show'])->name('show');
+        Route::patch('{withdrawalRequest}/approve', [WithdrawalRequestController::class, 'approve'])->name('approve');
+        Route::patch('{withdrawalRequest}/reject', [WithdrawalRequestController::class, 'reject'])->name('reject');
     });
 });

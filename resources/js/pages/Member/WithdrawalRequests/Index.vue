@@ -54,7 +54,7 @@ const getStatusClass = (status: string): string => {
                 <!-- Actions -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 p-6">
                     <div class="flex flex-col sm:flex-row gap-2">
-                        <Link :href="route('member.withdrawal-requests.create')">
+                        <Link :href="route('member.withdrawals.create')">
                             <PrimaryButton>
                                 New Withdrawal Request
                             </PrimaryButton>
@@ -89,7 +89,7 @@ const getStatusClass = (status: string): string => {
                                             </div>
                                         </div>
                                         <Link
-                                            :href="route('member.withdrawal-requests.show', request.id)"
+                                            :href="route('member.withdrawals.show', request.id)"
                                             class="text-primary hover:text-primary-dark"
                                         >
                                             View Details

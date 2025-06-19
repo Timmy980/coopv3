@@ -105,7 +105,7 @@ const getStatusClass = (status: string) => {
                     <div class="mb-4 flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-gray-900">Recent Savings</h3>
                         <Link 
-                            :href="route('savings.index')"
+                            :href="route('member.savings.index')"
                             class="text-sm text-primary hover:text-primary-dark"
                         >
                             View All
@@ -133,7 +133,7 @@ const getStatusClass = (status: string) => {
                     <div class="mb-4 flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-gray-900">Recent Withdrawals</h3>
                         <Link 
-                            :href="route('member.withdrawal-requests.index')"
+                            :href="route('member.withdrawals.index')"
                             class="text-sm text-primary hover:text-primary-dark"
                         >
                             View All

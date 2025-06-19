@@ -6,7 +6,7 @@
                     Bulk Upload Batches
                 </h2>
                 <Link
-                    :href="route('savings.bulk.upload')"
+                    :href="route('admin.savings.bulk.upload')"
                     class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700"
                 >
                     New Bulk Upload
@@ -77,7 +77,7 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             <Link
-                                                :href="route('savings.bulk.show', batch.id)"
+                                                :href="route('admin.savings.bulk.show', batch.id)"
                                                 class="text-indigo-600 hover:text-indigo-900"
                                             >
                                                 View Details

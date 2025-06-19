@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
 
 use App\Models\Saving;
 use App\Models\MemberAccount;
@@ -25,12 +27,6 @@ class SavingController extends Controller
     {
         $query = Saving::with(['memberAccount', 'cooperativeAccount']);
 
-        // If user is a member, only show their savings
-        if ($request->user()->hasRole('member')) {
-            $query->whereHas('memberAccount', function ($q) use ($request) {
-                $q->where('user_id', $request->user()->id);
-            });
-        }
         // Apply filters
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -49,21 +45,13 @@ class SavingController extends Controller
         }
         $savings = $query->latest('transaction_date')->paginate(15);
 
-        if ($request->user()->hasRole('member')) {
-            return Inertia::render('Member/Savings/Index', [
-                'savings' => $savings,
-                'filters' => $request->only(['status', 'source', 'date_from', 'date_to']),
-                'memberAccounts' => MemberAccount::where('user_id', Auth::id())->with('accountType')->get(),
-                'cooperativeAccounts' => CooperativeAccount::active()->get(),
-            ]);
-        } else {
-            return Inertia::render('Admin/Savings/Index', [
-                'savings' => $savings,
-                'filters' => $request->only(['status', 'source', 'date_from', 'date_to']),
-                'memberAccounts' => MemberAccount::with(['accountType', 'user'])->get(),
-                'cooperativeAccounts' => CooperativeAccount::active()->get(),
-            ]);
-        }
+
+        return Inertia::render('Admin/Savings/Index', [
+            'savings' => $savings,
+            'filters' => $request->only(['status', 'source', 'date_from', 'date_to']),
+            'memberAccounts' => MemberAccount::with(['accountType', 'user'])->get(),
+            'cooperativeAccounts' => CooperativeAccount::active()->get(),
+        ]);
     }
 
     /**
@@ -71,17 +59,6 @@ class SavingController extends Controller
      */
     public function show(Saving $saving)
     {
-        if (request()->user()->hasRole('member')) {
-            if ($saving->memberAccount->user_id !== Auth::id()) {
-                abort(403);
-            }
-    
-            $saving->load(['memberAccount', 'cooperativeAccount', 'initiatedBy', 'approvedBy', 'rejectedBy']);
-    
-            return Inertia::render('Member/Savings/Show', [
-                'saving' => $saving
-            ]);
-        }
         if (!request()->user()->hasPermissionTo('view savings')) {
             abort(403);
         }
@@ -135,7 +112,7 @@ class SavingController extends Controller
             // Note: Implementation depends on your payment gateway
             $gatewayTransaction = new PaymentGatewayTransaction([
                 'amount' => $validated['amount'],
-                'currency' => 'NGN', // Adjust based on your currency
+                'currency' => 'NGN',
                 'status' => 'pending',
                 'gateway_provider' => 'paystack', // Adjust based on your provider
             ]);
@@ -190,7 +167,7 @@ class SavingController extends Controller
             ]);
         }
 
-        return redirect()->route('savings.show', $saving->id);
+        return redirect()->route('admin.savings.show', $saving->id);
     }
 
     /**
@@ -230,7 +207,7 @@ class SavingController extends Controller
             'notes' => $validated['notes']
         ]);
 
-        return redirect()->route('savings.show', $saving->id);
+        return redirect()->route('admin.savings.show', $saving->id);
     }
 
     /**
@@ -285,7 +262,7 @@ class SavingController extends Controller
             'notes' => $validated['notes']
         ]);
 
-        return redirect()->route('savings.show', $saving->id);
+        return redirect()->route('admin.savings.show', $saving->id);
     }
 
     /**

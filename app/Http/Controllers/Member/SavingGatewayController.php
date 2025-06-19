@@ -124,7 +124,7 @@ class SavingGatewayController extends Controller
 
             DB::commit();
 
-            return redirect()->route('savings.index')
+            return redirect()->route('member.savings.index')
                 ->with('success', 'Payment processed successfully.');
 
         } catch (\Exception $e) {
@@ -135,7 +135,7 @@ class SavingGatewayController extends Controller
                 'status' => Saving::STATUS_FAILED,
             ]);
 
-            return redirect()->route('savings.index')
+            return redirect()->route('member.savings.index')
                 ->with('error', 'Payment verification failed. Please try again.');
         }
     }
